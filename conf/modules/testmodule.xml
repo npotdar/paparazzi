@@ -1,0 +1,15 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="testmodule">
+  <doc>
+    <description>test for crash course</description>
+  </doc>
+  <header>
+    <file name="testmodule.h"/>
+  </header>
+  <event fun="spentlongtimeinblock"/>
+  <makefile>
+    <file name="testmodule.c"/>
+  </makefile>
+</module>
+
