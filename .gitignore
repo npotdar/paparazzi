@@ -48,6 +48,7 @@ paparazzi.sublime-workspace
 # Vagrant VM files
 /.vagrant
 
+/var
 /dox
 
 /paparazzi
