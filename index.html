@@ -24,12 +24,45 @@
 
 <p>A quick guide to using git for our project</p>
 
+<p>Always start any procedure with
+1. Open <code>terminal</code>
+2. Type `cd ./paparazzi'</p>
+
 <h3>
 <a id="initial-setup" class="anchor" href="#initial-setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Initial Setup</h3>
 
+<h2>
+<a id="change-username" class="anchor" href="#change-username" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Change username</h2>
+
 <ol>
-<li>Open <code>terminal</code>
-</li>
+<li>Type   <code>git config --global user.name "firstname"' replacing</code>firstname' with your name</li>
+<li>Confirm the username by typing `git config --global user.name'</li>
+</ol>
+
+<h2>
+<a id="add-our-repository" class="anchor" href="#add-our-repository" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Add our repository</h2>
+
+<ol>
+<li>Type <code>git remove rm roland' to remove the</code>roland' repository</li>
+<li>Type `git remote add origin <a href="https://github.com/npotdar/paparazzi.git">https://github.com/npotdar/paparazzi.git</a>' to add repository</li>
+<li>Verify settings by `git remote -v' to check the origin respository is there</li>
+</ol>
+
+<h3>
+<a id="pulling-our-repository-updating-your-local-version-from-online" class="anchor" href="#pulling-our-repository-updating-your-local-version-from-online" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Pulling our repository (updating your local version from online)</h3>
+
+<ol>
+<li>Type `git pull origin mavlabcourse4'</li>
+</ol>
+
+<h3>
+<a id="pushing-and-committing-changes-to-repository-updating-online-from-local-version" class="anchor" href="#pushing-and-committing-changes-to-repository-updating-online-from-local-version" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Pushing and committing changes to repository (updating online from local version)</h3>
+
+<ol>
+<li>Type `git status' lets you check which files will be updated online</li>
+<li>Type `git add .' to add all your updated files to the update</li>
+<li>Type <code>git commit -m "your message"' to prepare addition and replace</code>your message' with a descriptive message of the changes</li>
+<li>Type `git push origin mavlabcourse4' to send changes online </li>
 </ol>
 
       <footer class="site-footer">
