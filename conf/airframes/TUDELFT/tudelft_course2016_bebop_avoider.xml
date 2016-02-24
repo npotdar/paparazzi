@@ -95,13 +95,12 @@
 <!-- to adjust your body to imu variables until it is -->
   <section name="IMU" prefix="IMU_">
     <!-- Magneto calibration -->
-    <define name="MAG_X_NEUTRAL" value="18"/>
-    <define name="MAG_Y_NEUTRAL" value="157"/>
-    <define name="MAG_Z_NEUTRAL" value="49"/>
-    <define name="MAG_X_SENS" value="10.5007722373" integer="16"/>
-    <define name="MAG_Y_SENS" value="11.1147400462" integer="16"/>
-    <define name="MAG_Z_SENS" value="11.6479371722" integer="16"/>
-
+    	<define name="MAG_X_NEUTRAL" value="-87"/>
+	<define name="MAG_Y_NEUTRAL" value="-19"/>
+	<define name="MAG_Z_NEUTRAL" value="206"/>
+	<define name="MAG_X_SENS" value="7.08072397802" integer="16"/>
+	<define name="MAG_Y_SENS" value="7.25407738005" integer="16"/>
+	<define name="MAG_Z_SENS" value="7.89161219661" integer="16"/>
     <!-- Magneto current calibration -->
     <define name="MAG_X_CURRENT_COEF" value="0.0"/>
     <define name="MAG_Y_CURRENT_COEF" value="0.0"/>
