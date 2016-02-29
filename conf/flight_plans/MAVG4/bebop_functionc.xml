@@ -21,7 +21,7 @@
     <waypoint lat="51.9905874" lon="4.3767766" name="FA2"/>
     <waypoint lat="51.9906409" lon="4.3767226" name="FA3"/>
     <waypoint lat="51.9906737" lon="4.3768074" name="FA4"/>
-    <waypoint lat="51.990622" lon="4.376791" name="circp"/>
+    <waypoint name="circp" x="0.0" y="0.0"/>
   </waypoints>
   <sectors>
     <sector color="red" name="Flight_Area">
