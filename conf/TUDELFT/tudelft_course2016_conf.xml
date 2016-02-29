@@ -24,7 +24,7 @@
   <aircraft
    name="bebop_test"
    ac_id="208"
-   airframe="airframes/TUDELFT/tudelft_course2016_bebop_avoider.xml"
+   airframe="airframes/MAVG4/bebop_optitrack.xml"
    radio="radios/dummy.xml"
    telemetry="telemetry/default_rotorcraft.xml"
    flight_plan="flight_plans/MAVG4/bebop_optitrack.xml"
