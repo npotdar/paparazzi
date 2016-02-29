@@ -1,8 +1,11 @@
-<!DOCTYPE flight_plan SYSTEM "flight_plan.dtd">
+<!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
 <flight_plan alt="1.5" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="20" name="Rotorcraft Optitrack (Delft)" security_height="0.3">
   <header>
 #include "autopilot.h"
+#include "subsystems/ahrs.h"
+#include "subsystems/electrical.h"
+#include "subsystems/datalink/datalink.h"
 </header>
   <waypoints>
     <waypoint name="HOME" x="0.0" y="0.0"/>
@@ -30,11 +33,9 @@
 
   <exceptions>
     <!-- Check inside small flight area, then goto Center(Standby) -->
-    <exception cond="Or(! InsideFlight_Area(GetPosX(), GetPosY()), GetPosAlt() > GetAltRef() + 50) && !(nav_block == BLOCK_Init) && !(nav_block == BLOCK_Geo_init) && !(nav_block == BLOCK_Landed)" deroute="Standby"/>
-    <!-- Check if battery is empty, then Land Here -->
-    <exception cond="electrical.bat_low && !(nav_block == BLOCK_Land) && !(nav_block == BLOCK_Flare) && !(nav_block == BLOCK_Landed)" deroute="Land_Here"/>
-    <!-- Check if time is up(10 seconds range), then Land Here -->
-    <exception cond="10 > time_until_end && !(nav_block == BLOCK_Land) && !(nav_block == BLOCK_Flare) && !(nav_block == BLOCK_Landed)" deroute="Land_Here"/>
+    <!--<exception cond="!InsideFlight_Area(GetPosX(), GetPosY())" deroute="Standby"/>
+    <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="land"/>
+    <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="landhere"/>-->
   </exceptions>
   <blocks>
     <block name="Wait GPS">
@@ -83,7 +84,7 @@
       <go from="p4" hmode="route" wp="p1"/>
       <deroute block="stay_p1"/>
     </block>
-    <block name="land here" strip_button="Land Here" strip_icon="land-right.png">
+    <block name="landhere" strip_button="Land Here" strip_icon="land-right.png">
       <call fun="NavSetWaypointHere(WP_TD)"/>
     </block>
     <block name="land">

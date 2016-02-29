@@ -12,8 +12,10 @@
 
 #ifndef TESTMODULE_H
 #define TESTMODULE_H
+#include <inttypes.h>
 
-extern void spentLongTimeInBlock(int);
+
+extern uint8_t spentLongTimeInBlock(int);
 
 #endif
 

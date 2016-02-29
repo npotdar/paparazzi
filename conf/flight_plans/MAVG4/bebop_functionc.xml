@@ -1,11 +1,8 @@
-<!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
+<!DOCTYPE flight_plan SYSTEM "flight_plan.dtd">
 
-<flight_plan alt="1.5" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="20" name="Bebop Optitrack (Delft)" security_height="0.4">
+<flight_plan alt="1.5" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="20" name="Rotorcraft Optitrack (Delft)" security_height="0.3">
   <header>
 #include "autopilot.h"
-#include "subsystems/ahrs.h"
-#include "subsystems/electrical.h"
-#include "subsystems/datalink/datalink.h"
 </header>
   <waypoints>
     <waypoint name="HOME" x="0.0" y="0.0"/>
@@ -17,7 +14,6 @@
     <waypoint lat="51.990614" lon="4.376779" name="p2"/>
     <waypoint lat="51.990636" lon="4.376759" name="p3"/>
     <waypoint lat="51.990651" lon="4.376805" name="p4"/>
-    <waypoint lat="51.990622" lon="4.376791" name="circp"/>
     <waypoint lat="51.9906213" lon="4.3768628" name="FA1"/>
     <waypoint lat="51.9905874" lon="4.3767766" name="FA2"/>
     <waypoint lat="51.9906409" lon="4.3767226" name="FA3"/>
@@ -33,10 +29,12 @@
   </sectors>
 
   <exceptions>
-    <exception cond="!InsideFlight_Area(GetPosX(), GetPosY())" deroute="Standby"/>
-    <exception cond="datalink_time > 2" deroute="Land_Here"/>
-    <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>
-    <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land_Here"/>
+    <!-- Check inside small flight area, then goto Center(Standby) -->
+    <exception cond="Or(! InsideFlight_Area(GetPosX(), GetPosY()), GetPosAlt() > GetAltRef() + 50) && !(nav_block == BLOCK_Init) && !(nav_block == BLOCK_Geo_init) && !(nav_block == BLOCK_Landed)" deroute="Standby"/>
+    <!-- Check if battery is empty, then Land Here -->
+    <exception cond="electrical.bat_low && !(nav_block == BLOCK_Land) && !(nav_block == BLOCK_Flare) && !(nav_block == BLOCK_Landed)" deroute="Land_Here"/>
+    <!-- Check if time is up(10 seconds range), then Land Here -->
+    <exception cond="10 > time_until_end && !(nav_block == BLOCK_Land) && !(nav_block == BLOCK_Flare) && !(nav_block == BLOCK_Landed)" deroute="Land_Here"/>
   </exceptions>
   <blocks>
     <block name="Wait GPS">
@@ -85,19 +83,36 @@
       <go from="p4" hmode="route" wp="p1"/>
       <deroute block="stay_p1"/>
     </block>
-    <block name="Land_Here" strip_button="Land Here" strip_icon="land-right.png">
+    <!-- CUSTOM BEGIN: Fly around in a circle in the centre -->
+    <block name="circ_centre">
+      <go wp="circp"/>
+      <circle wp="circp" radius="10"/>
+    </block>
+    <!-- Looped movement in 3 times rectangle waypoint path -->
+    <block name="loop_3_survey">
+      <go wp="p1"/>
+      <for var="it1" from="0" to="3">
+        <path wpts="p1, p2, p3, p4"/>
+      </for>
+      <go wp="p1"/>
+    </block>
+    <block name="5sec_test">
+      <exception spentLongTimeInBlock(block_time)/>
+    </block>
+    <!-- CUSTOM END -->
+    <block name="land here" strip_button="Land Here" strip_icon="land-right.png">
       <call fun="NavSetWaypointHere(WP_TD)"/>
     </block>
-    <block name="Land">
+    <block name="land">
       <go wp="TD"/>
     </block>
-    <block name="Flare">
+    <block name="flare">
       <exception cond="NavDetectGround()" deroute="Holding point"/>
-      <exception cond="!nav_is_in_flight()" deroute="Landed"/>
+      <exception cond="!nav_is_in_flight()" deroute="landed"/>
       <call fun="NavStartDetectGround()"/>
       <stay climb="nav_descend_vspeed" vmode="climb" wp="TD"/>
     </block>
-    <block name="Landed">
+    <block name="landed">
       <call fun="NavKillThrottle()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
