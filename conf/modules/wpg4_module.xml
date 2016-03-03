@@ -1,0 +1,14 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="wpg4_module">
+  <doc>
+    <description>Waypoint relative movement block</description>
+  </doc>
+  <header>
+    <file name="wpg4_module.h"/>
+  </header>
+  <makefile>
+    <file name="wpg4_module.c"/>
+  </makefile>
+</module>
+

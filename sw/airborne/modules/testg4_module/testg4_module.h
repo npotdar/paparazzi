@@ -5,7 +5,7 @@
  *
  */
 /**
- * @file "modules/testmodule/testmodule.h"
+ * @file "modules/testg4_module/testg4_module.h"
  * @author nikhil
  * test for crash course
  */

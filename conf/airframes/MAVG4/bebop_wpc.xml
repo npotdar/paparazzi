@@ -50,7 +50,7 @@
       <define name="VIEWVIDEO_QUALITY_FACTOR" value="80"/>
       <define name="VIEWVIDEO_DOWNSIZE_FACTOR" value="1"/>
     </load>
-    <load name="testg4_module.xml"/>
+    <load name="wpg4_module.xml"/>
   </modules>
 
   <commands>
