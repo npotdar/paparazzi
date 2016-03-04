@@ -1,0 +1,17 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="brg4_module" dir="testg4_module">
+  <doc>
+    <description>Red Blue Detection</description>
+  </doc>
+  <header>
+    <file name="brg4_module.h"/>
+  </header>
+  <init fun="br_colour_init()"/>
+  <periodic fun="br_colour_periodic()" freq="4"/>
+  <periodic fun="br_detected_periodic()" freq="2"/>
+  <makefile>
+    <file name="brg4_module.c"/>
+  </makefile>
+</module>
+

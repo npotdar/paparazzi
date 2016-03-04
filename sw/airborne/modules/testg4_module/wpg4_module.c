@@ -5,12 +5,12 @@
  *
  */
 /**
- * @file "modules/wpg4_module/wpg4_module.c"
+ * @file "modules/testg4_module/wpg4_module.c"
  * @author nikhil
  * Moving waypoints relative
  */
 
-#include "modules/wpg4_module/wpg4_module.h"
+#include "modules/testg4_module/wpg4_module.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "state.h"
 #include <stdlib.h>

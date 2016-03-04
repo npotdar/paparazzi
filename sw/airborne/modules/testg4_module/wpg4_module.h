@@ -5,7 +5,7 @@
  *
  */
 /**
- * @file "modules/wpg4_module/wpg4_module.h"
+ * @file "modules/testg4_module/wpg4_module.h"
  * @author nikhil
  * Moving waypoints relative
  */
