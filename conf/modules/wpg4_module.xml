@@ -1,6 +1,6 @@
 <!DOCTYPE module SYSTEM "module.dtd">
 
-<module name="wpg4_module">
+<module name="wpg4_module" dir="testg4_module">
   <doc>
     <description>Waypoint relative movement block</description>
   </doc>
