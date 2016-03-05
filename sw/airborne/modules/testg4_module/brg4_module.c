@@ -22,7 +22,7 @@ typedef uint8_t yuv_fil_colour[6];
 uint8_t detectedColour = FALSE;
 int detectedRed = FALSE;
 int detectedBlue = FALSE;
-int thresholdColourCount = 100;
+int thresholdColourCount = 150;
 int switchColour = 1;
 
 // Define the colours here
