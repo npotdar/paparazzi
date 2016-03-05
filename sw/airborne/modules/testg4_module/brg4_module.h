@@ -18,9 +18,14 @@ uint8_t detectedColour;
 extern int detectedRed;
 extern int detectedBlue;
 
-void br_colour_init(yuv_fil_colour* setColour,int32_t *heading);
-void br_colour_periodic(yuv_fil_colour* setColour1, yuv_fil_colour* setColour2);
-void br_detected_periodic();
+extern void br_colour_init(yuv_fil_colour* setColour,int32_t *heading);
+extern void br_colour_periodic(yuv_fil_colour* setColour1, yuv_fil_colour* setColour2);
+extern void br_detected_periodic();
+
+typedef uint8_t yuv_fil_colour[6];
+
+extern yuv_fil_colour c_red;
+extern yuv_fil_colour c_blue;
 
 #endif
 

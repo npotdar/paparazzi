@@ -30,17 +30,13 @@ yuv_fil_colour c_red={1,1,1,1,1,1};
 yuv_fil_colour c_blue={1,1,1,1,1,1};
 
 
-void br_colour_init(yuv_fil_colour* setColour,int32_t *heading){
+void br_colour_init(yuv_fil_colour* setColour){
 	color_lum_min=*setColour[0];
 	color_lum_max=*setColour[1];
 	color_cb_min=*setColour[2];
 	color_cb_max=*setColour[3];
 	color_cr_min=*setColour[4];
 	color_cr_max=*setColour[5];
-	//Set heading in right direction already
-	float new_heading = ANGLE_FLOAT_OF_BFP(*heading) + RadOfDeg(90);
-	*heading=ANGLE_BFP_OF_REAL(new_heading);
-	INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
 }
 
 void br_colour_periodic(yuv_fil_colour* setColour1, yuv_fil_colour* setColour2){
