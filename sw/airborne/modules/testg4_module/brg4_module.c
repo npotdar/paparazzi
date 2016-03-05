@@ -13,16 +13,17 @@
 #include "modules/testg4_module/brg4_module.h"
 #include "modules/testg4_module/wpg4_module.h"
 #include "firmwares/rotorcraft/navigation.h"
+#include "modules/computer_vision/colorfilter.h"
 #include "state.h"
 #include <stdlib.h>
+
+typedef uint8_t yuv_fil_colour[6];
 
 uint8_t detectedColour = FALSE;
 int detectedRed = FALSE;
 int detectedBlue = FALSE;
 int thresholdColourCount = 100;
 int switchColour = 1;
-
-typedef uint8_t yuv_fil_colour[6];
 
 // Define the colours here
 
