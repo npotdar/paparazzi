@@ -11,7 +11,7 @@
  */
 
 #include "modules/testg4_module/brg4_module.h"
-#include "modules/testg4_module/wpg4_module.h"
+//#include "modules/testg4_module/wpg4_module.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "modules/computer_vision/colorfilter.h"
 #include "state.h"
