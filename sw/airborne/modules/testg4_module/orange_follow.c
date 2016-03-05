@@ -20,30 +20,28 @@
 
 typedef uint8_t yuv_fil_colour[6];
 
-uint8_t keepMoving = FALSE;
 int thresholdColourCount = 150;
-int maxCount = 400;
+int maxColourCount = 400;
 int thresholdHeading = 20; //Threshold for number of pixels from center for correct heading
-uint16_t imageWidth;
+uint16_t imageWidth = 272; //Hardcoded image size in video_thread.c
 
 // Define the colours here
 
 yuv_fil_colour c_orange={1,1,1,1,1,1};
 
 // Functions here
-void follow_colour_init(yuv_fil_colour* setColour, struct image_t *img){
+void follow_colour_init(yuv_fil_colour* setColour){
 	color_lum_min=*setColour[0];
 	color_lum_max=*setColour[1];
 	color_cb_min=*setColour[2];
 	color_cb_max=*setColour[3];
 	color_cr_min=*setColour[4];
 	color_cr_max=*setColour[5];
-	imageWidth = img->w;
 }
 
 // Check if heading is towards colour and adjust heading as necessary
 
-void follow_check_periodic(yuv_fil_colour* checkColour, struct point_t *points, uint16_t points_cnt, int32_t headingIncrement){
+void follow_check_periodic(struct point_t *points, uint16_t points_cnt, int32_t headingIncrement){
 	int px_x_count=0;
 	double px_x_avg = 0.0;
 	//Check if count of points is above the threshold otherwise no action
@@ -74,10 +72,16 @@ void follow_check_periodic(yuv_fil_colour* checkColour, struct point_t *points, 
 
 }
 
-
 // Check whether keepMoving is okay
 
-
+uint8_t follow_keepmove(){
+	//Check if colour_count within bounds and not too close
+	if(color_count > thresholdColourCount && color_count <= maxColourCount){
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
 
 
 

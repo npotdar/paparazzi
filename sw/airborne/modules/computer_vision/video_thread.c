@@ -151,8 +151,8 @@ static void *video_thread_function(void *data)
 
   // create the images
   if (vid->filters) {
-    // fixme: don't hardcode size, works for bebop front camera for now
-#define IMG_FLT_SIZE 272
+	// fixme: don't hardcode size, works for bebop front camera for now
+	#define IMG_FLT_SIZE 272
     image_create(&img_color, IMG_FLT_SIZE, IMG_FLT_SIZE, IMAGE_YUV422);
     image_create(&img_jpeg, IMG_FLT_SIZE, IMG_FLT_SIZE, IMAGE_JPEG);
   }
