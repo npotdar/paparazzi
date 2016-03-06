@@ -63,6 +63,13 @@ struct flow_t {
   int16_t flow_y;             ///< The y direction flow in subpixels
 };
 
+/* CUSTOM Image filtered color points amount and x,y avg */
+struct image_filt {
+	uint16_t color_count;
+	uint32_t color_avg_x;
+	uint32_t color_avg_y;
+};
+
 /* Usefull image functions */
 void image_create(struct image_t *img, uint16_t width, uint16_t height, enum image_type type);
 void image_free(struct image_t *img);
@@ -79,5 +86,8 @@ int32_t image_multiply(struct image_t *img_a, struct image_t *img_b, struct imag
 void image_show_points(struct image_t *img, struct point_t *points, uint16_t points_cnt);
 void image_show_flow(struct image_t *img, struct flow_t *vectors, uint16_t points_cnt, uint8_t subpixel_factor);
 void image_draw_line(struct image_t *img, struct point_t *from, struct point_t *to);
+
+/* CUSTOM FILTER */
+struct image_filt image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M);
 
 #endif

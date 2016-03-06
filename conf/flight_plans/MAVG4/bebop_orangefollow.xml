@@ -64,20 +64,15 @@
     <!--Detection and move-->
     <block name="StayHOME">
       <stay wp="HOME"/>
-      <exception cond="detectedRed" deroute="RedWP"/>
-      <exception cond="detectedBlue" deroute="BlueWP"/>
+      <exception cond="follow_keepmove()" deroute="Follower"/>
     </block>
-    <block name="RedWP">
-      <call fun="increase_nav_heading(&nav_heading, 90, TRUE)"/>
-      <call fun="MoveRelative(WP_GOAL,2.0)"/>
-      <call fun="increase_nav_heading(&nav_heading, -90, TRUE)"/>
-      <exception cond="block_time > 7" deroute="ReturnHOME"/>
+    <block name="Follower">
+      <call fun="MoveRelative(WP_GOAL,0.2)"/>
+      <exception cond="!follow_keepmove()" deroute="StayGOAL"/>
     </block>
-    <block name="BlueWP">
-      <call fun="increase_nav_heading(&nav_heading, -90, TRUE)"/>
-      <call fun="MoveRelative(WP_GOAL,2.0)"/>
-      <call fun="increase_nav_heading(&nav_heading, 90, TRUE)"/>
-      <exception cond="block_time > 7" deroute="ReturnHOME"/>
+    <block name="StayGOAL">
+      <call fun="NavSetWaypointHere(WP_GOAL)"/>
+      <exception cond="follow_keepmove()" deroute="Follower"/>
     </block>
     <block name="ReturnHOME">
       <go wp="HOME"/>
