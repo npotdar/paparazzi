@@ -28,6 +28,7 @@
 // Own header
 #include "modules/computer_vision/cv.h"
 #include "modules/computer_vision/colorfilter_ext.h"
+#include "modules/computer_vision/lib/vision/image.h"
 
 #include "subsystems/datalink/telemetry.h"
 #include <stdio.h>
@@ -42,23 +43,22 @@ uint8_t color_cr_min  = 180;
 uint8_t color_cr_max  = 255;
 
 // Result
+
 int color_count = 0;
-uint32_t color_avg_x = 0;
-uint32_t color_avg_y = 0;
+int color_avg_x = 0;
+int color_avg_y = 0;
 
 // Function
 bool_t colorfilter_ext_func(struct image_t* img);
 bool_t colorfilter_ext_func(struct image_t* img)
 {
-  // Filter
-  struct image_filt processed = image_yuv422_colorfilt_ext(img,img,
-      color_lum_min,color_lum_max,
-      color_cb_min,color_cb_max,
-      color_cr_min,color_cr_max
-      );
-  color_count = (int)(processed.color_count);
-  color_avg_x = processed.color_avg_x;
-  color_avg_y = processed.color_avg_y;
+
+	// Filter
+  image_yuv422_colorfilt_ext(img,img,&color_count,&color_avg_x,&color_avg_y,
+        color_lum_min,color_lum_max,
+        color_cb_min,color_cb_max,
+        color_cr_min,color_cr_max
+        );
 
   DOWNLINK_SEND_COLORFILTER(DefaultChannel, DefaultDevice, &color_count);
   return FALSE;

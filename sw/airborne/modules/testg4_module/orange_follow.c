@@ -11,7 +11,7 @@
  */
 
 #include "modules/testg4_module/orange_follow.h"
-//#include "modules/testg4_module/wpg4_module.h"
+#include "modules/testg4_module/wpg4_module.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "modules/computer_vision/colorfilter_ext.h"
 #include "modules/computer_vision/lib/vision/image.h"
@@ -23,7 +23,7 @@ typedef uint8_t yuv_fil_colour[6];
 int thresholdColourCount = 150;
 int maxColourCount = 400;
 int thresholdHeading = 20; //Threshold for number of pixels from center for correct heading
-uint16_t headingIncrement = 3; // Change heading by this much to realign centre
+uint8_t headingIncrement = 3; // Change heading by this much to realign centre
 uint16_t imageWidth = 272; //Hardcoded image size in video_thread.c
 
 // Define the colours here
@@ -44,6 +44,7 @@ void follow_colour_init(yuv_fil_colour* setColour){
 
 void follow_check_periodic(){
 	double px_x_avg = color_avg_x;
+	printf("Check colour detect: %d, colour: %d \n",color_count,px_x_avg);
 	//Check if count of points is above the threshold otherwise no action
 	if(color_count > thresholdColourCount){
 

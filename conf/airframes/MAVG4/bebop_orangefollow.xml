@@ -1,7 +1,7 @@
 <!DOCTYPE airframe SYSTEM "../airframe.dtd">
 
 <!-- And example airframe to be use in the TU DElft Course 2016 -->
-<airframe name="AvoiderBob"> <!-- The name of your airframe -->
+<airframe name="FollowBebop"> <!-- The name of your airframe -->
 
   <firmware name="rotorcraft">
     <target name="ap" board="bebop"/> <!-- The type of Autopilot board hardware one uses -->

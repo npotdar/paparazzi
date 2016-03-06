@@ -41,7 +41,7 @@ extern uint8_t color_cr_min;
 extern uint8_t color_cr_max;
 
 extern int color_count;
-extern uint32_t color_avg_x;
-extern uint32_t color_avg_y;
+extern int color_avg_x;
+extern int color_avg_y;
 
 #endif /* COLORFILTER_CV_PLUGIN_H */

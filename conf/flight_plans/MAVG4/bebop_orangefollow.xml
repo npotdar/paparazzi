@@ -78,7 +78,7 @@
       <go wp="HOME"/>
       <deroute block="StayHOME"/>
     </block>    
-    <!-- CUSTOM END -->
+     <!--CUSTOM END--> 
     <block name="landhere" strip_button="Land Here" strip_icon="land-right.png">
       <call fun="NavSetWaypointHere(WP_TD)"/>
     </block>

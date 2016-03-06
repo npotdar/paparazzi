@@ -546,16 +546,13 @@ void image_draw_line(struct image_t *img, struct point_t *from, struct point_t *
  * @param[in] v_M The V maximum value
  * @return Structure of The amount of filtered pixels
  */
-struct image_filt image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, uint8_t y_m, uint8_t y_M, uint8_t u_m,
+void image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, int* img_ccount, int* img_cxavg, int* img_cyavg, uint8_t y_m, uint8_t y_M, uint8_t u_m,
                                 uint8_t u_M, uint8_t v_m, uint8_t v_M)
 {
-  struct image_filt processed;
-  processed.color_count = 0;
-  processed.color_avg_x = 0;
-  processed.color_avg_y = 0;
-
   uint8_t *source = input->buf;
   uint8_t *dest = output->buf;
+
+  int process_output[3] = {0,0,0};
 
   // Copy the creation timestamp (stays the same)
   memcpy(&output->ts, &input->ts, sizeof(struct timeval));
@@ -572,9 +569,9 @@ struct image_filt image_yuv422_colorfilt_ext(struct image_t *input, struct image
         && (dest[2] >= v_m)
         && (dest[2] <= v_M)
       ) {
-        processed.color_count ++;
-        processed.color_avg_x += x;
-        processed.color_avg_y += y;
+        process_output[0] += 1;
+        process_output[1] += (int)x;
+        process_output[2] += (int)y;
 
         // UYVY
         dest[0] = 64;        // U
@@ -598,11 +595,14 @@ struct image_filt image_yuv422_colorfilt_ext(struct image_t *input, struct image
       source += 4;
     }
   }
-
+  *img_ccount = process_output[0];
   // Calculate average
-  processed.color_avg_x = processed.color_avg_x/processed.color_count;
-  processed.color_avg_y = processed.color_avg_y/processed.color_count;
-
-  return processed;
+  if(process_output[0]!=0){
+	  *img_cxavg = process_output[1]/(process_output[0]);
+	  *img_cyavg = process_output[2]/(process_output[0]);
+  } else {
+	  *img_cxavg = (process_output[0]);
+	  *img_cyavg = (process_output[0]);
+  }
 }
 
