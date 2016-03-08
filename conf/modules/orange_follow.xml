@@ -8,8 +8,8 @@
   <settings>
     <dl_settings>
       <dl_settings NAME="Orange Follower">
-         <dl_setting var="thresholdColourCount" min="0" step="1" max="300" shortname="min_colour" />
-         <dl_setting var="maxColourCount" min="0" step="1" max="600" shortname="max_colour" />
+         <dl_setting var="thresholdColourCount" min="0" step="1" max="800" shortname="min_colour" />
+         <dl_setting var="maxColourCount" min="0" step="1" max="2000" shortname="max_colour" />
          <dl_setting var="thresholdHeading"  min="-180" step="1" max="180" shortname="thres_px" />
          <dl_setting var="headingIncrement"  min="-90" step="1" max="90" shortname="div_heading" />
       </dl_settings>
@@ -19,8 +19,8 @@
   <header>
     <file name="orange_follow.h"/>
   </header>
-  <init fun="follow_colour_init(&c_orange)"/>
-  <periodic fun="follow_check_periodic()" freq="2"/>
+  <init fun="follow_colour_init(c_see_orange)"/>
+  <periodic fun="follow_check_periodic()" freq="1"/>
   <makefile>
     <file name="orange_follow.c"/>
   </makefile>

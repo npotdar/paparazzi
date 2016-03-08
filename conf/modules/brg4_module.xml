@@ -9,9 +9,9 @@
   <header>
     <file name="brg4_module.h"/>
   </header>
-  <init fun="br_colour_init(&c_red)"/>
-  <!--<periodic fun="br_colour_periodic(&c_red, &c_blue)" freq="0.05"/>
-  <periodic fun="br_detected_periodic()" freq="1"/>-->
+  <init fun="br_colour_init(c_see_blue)"/>
+  <periodic fun="br_colour_periodic(c_see_red, c_see_blue)" freq="1"/>
+  <periodic fun="br_detected_periodic()" freq="2"/>
   <makefile>
     <file name="brg4_module.c"/>
   </makefile>

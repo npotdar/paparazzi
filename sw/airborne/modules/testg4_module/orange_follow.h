@@ -14,18 +14,16 @@
 #define ORANGE_FOLLOW_H
 #include <inttypes.h>
 
-typedef uint8_t yuv_fil_colour[6];
-
 extern int thresholdColourCount;
 extern int maxColourCount;
 extern int thresholdHeading;
 extern uint8_t headingIncrement;
 
-extern yuv_fil_colour c_orange;
+extern int c_see_orange[6];
 
-extern void follow_colour_init(yuv_fil_colour* setColour);
-extern void follow_check_periodic();
-extern uint8_t follow_keepmove();
+extern void follow_colour_init(int setColour[6]);
+extern void follow_check_periodic(void);
+extern uint8_t follow_keepmove(void);
 
 #endif
 

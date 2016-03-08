@@ -74,16 +74,16 @@
       <exception cond="detectedBlue" deroute="BlueWP"/>
     </block>
     <block name="RedWP">
-      <call fun="increase_nav_heading(&nav_heading, 90, TRUE)"/>
+      <call fun="increase_nav_heading(&nav_heading, -90, TRUE)"/>
       <call fun="MoveRelative(WP_GOAL,1.5)"/>
-      <call fun="increase_nav_heading(&nav_heading, -180, TRUE)"/>
+      <call fun="increase_nav_heading(&nav_heading, 90, TRUE)"/>
       <stay wp="GOAL"/>
       <exception cond="block_time > 7" deroute="ReturnHOME"/>
     </block>
     <block name="BlueWP">
-      <call fun="increase_nav_heading(&nav_heading, -90, TRUE)"/>
+      <call fun="increase_nav_heading(&nav_heading, 90, TRUE)"/>
       <call fun="MoveRelative(WP_GOAL,1.5)"/>
-      <call fun="increase_nav_heading(&nav_heading, 180, TRUE)"/>
+      <call fun="increase_nav_heading(&nav_heading, -90, TRUE)"/>
       <stay wp="GOAL"/>
       <exception cond="block_time > 7" deroute="ReturnHOME"/>
     </block>

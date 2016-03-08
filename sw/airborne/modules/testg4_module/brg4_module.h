@@ -14,18 +14,19 @@
 #define BRMOVE_H
 #include <inttypes.h>
 
-typedef uint8_t yuv_fil_colour[6];
+//typedef uint8_t yuv_fil_colour[6];
 
 extern uint8_t detectedColour;
 extern int detectedRed;
 extern int detectedBlue;
+extern int switchColour;
 
-extern void br_colour_init(yuv_fil_colour* setColour);
-extern void br_colour_periodic(yuv_fil_colour* setColour1, yuv_fil_colour* setColour2);
+extern void br_colour_init(int setColour[6]);
+extern void br_colour_periodic(int setColour1[6], int setColour2[6]);
 extern void br_detected_periodic(void);
 
-extern yuv_fil_colour c_red;
-extern yuv_fil_colour c_blue;
+extern int c_see_red[6];
+extern int c_see_blue[6];
 
 #endif
 

@@ -18,33 +18,31 @@
 #include "state.h"
 #include <stdlib.h>
 
-typedef uint8_t yuv_fil_colour[6];
-
-int thresholdColourCount = 150;
-int maxColourCount = 400;
+int thresholdColourCount = 100;
+int maxColourCount = 900;
 int thresholdHeading = 20; //Threshold for number of pixels from center for correct heading
 uint8_t headingIncrement = 3; // Change heading by this much to realign centre
 uint16_t imageWidth = 272; //Hardcoded image size in video_thread.c
 
 // Define the colours here
 
-yuv_fil_colour c_orange={1,1,1,1,1,1};
+int c_see_orange[6]={8,86,27,112,133,250};
 
 // Functions here
-void follow_colour_init(yuv_fil_colour* setColour){
-	color_lum_min=*setColour[0];
-	color_lum_max=*setColour[1];
-	color_cb_min=*setColour[2];
-	color_cb_max=*setColour[3];
-	color_cr_min=*setColour[4];
-	color_cr_max=*setColour[5];
+void follow_colour_init(int setColour[6]){
+	color_lum_min=setColour[0];
+	color_lum_max=setColour[1];
+	color_cb_min=setColour[2];
+	color_cb_max=setColour[3];
+	color_cr_min=setColour[4];
+	color_cr_max=setColour[5];
 }
 
 // Check if heading is towards colour and adjust heading as necessary
 
 void follow_check_periodic(){
 	double px_x_avg = color_avg_x;
-	printf("Check colour detect: %d, colour: %d \n",color_count,px_x_avg);
+	//printf("Check colour detect: %d, colour: %d \n",color_count,px_x_avg);
 	//Check if count of points is above the threshold otherwise no action
 	if(color_count > thresholdColourCount){
 

@@ -67,17 +67,15 @@
       <exception cond="follow_keepmove()" deroute="Follower"/>
     </block>
     <block name="Follower">
-      <call fun="MoveRelative(WP_GOAL,0.2)"/>
+      <call fun="MoveRelative(WP_GOAL,1)"/>
+	<stay wp="GOAL"/>
       <exception cond="!follow_keepmove()" deroute="StayGOAL"/>
     </block>
     <block name="StayGOAL">
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
+	<stay wp="GOAL"/>
       <exception cond="follow_keepmove()" deroute="Follower"/>
-    </block>
-    <block name="ReturnHOME">
-      <go wp="HOME"/>
-      <deroute block="StayHOME"/>
-    </block>    
+    </block>   
      <!--CUSTOM END--> 
     <block name="landhere" strip_button="Land Here" strip_icon="land-right.png">
       <call fun="NavSetWaypointHere(WP_TD)"/>
