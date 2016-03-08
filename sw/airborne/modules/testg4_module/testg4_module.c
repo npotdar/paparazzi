@@ -19,3 +19,8 @@ extern uint8_t spentLongTimeInBlock (int timeInBlock){
 	return timeInBlock > 5;
 }
 
+extern uint8_t testWpId(uint8_t waypoint){
+	printf("waypoint x coordinate is");
+	return true;
+}
+

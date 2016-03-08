@@ -91,6 +91,11 @@
       <circle wp="circp" radius="2"/>
       <deroute block="Standby"/>
     </block>
+    <block name="test_Steven">
+    	<go wp="circp"/>
+    	<call fun="testWpId(WP_TD)"/>
+      	<circle wp="circp" radius="2"/>
+    </block>
     <!-- Looped movement in 3 times rectangle waypoint path 
     <block name="loop_3_survey">
       <go wp="p1"/>
