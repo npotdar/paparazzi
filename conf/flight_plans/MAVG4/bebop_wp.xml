@@ -73,7 +73,7 @@
       <exception cond="block_time > 5" deroute="ChangeHeading"/>
     </block>
     <block name="ChangeHeading">
-      <call fun="increase_nav_heading(&nav_heading, 60, FALSE)"/>
+      <call fun="increase_nav_heading(&nav_heading, 90, FALSE)"/>
       <exception cond="block_time > 5" deroute="MoveGoalForward"/>
     </block>
     <block name="MoveGoalForward">

@@ -33,7 +33,6 @@
 
   <init fun="viewvideo_init()"/>
   <makefile target="ap|nps">
-
     <file name="viewvideo.c"/>
     <!-- Include the needed Computer Vision files -->
     <define name="modules/computer_vision" type="include"/>

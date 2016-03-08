@@ -22,7 +22,7 @@ extern int detectedBlue;
 
 extern void br_colour_init(yuv_fil_colour* setColour);
 extern void br_colour_periodic(yuv_fil_colour* setColour1, yuv_fil_colour* setColour2);
-extern void br_detected_periodic();
+extern void br_detected_periodic(void);
 
 extern yuv_fil_colour c_red;
 extern yuv_fil_colour c_blue;

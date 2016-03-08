@@ -4,12 +4,14 @@
   <doc>
     <description>Red Blue Detection</description>
   </doc>
+
+  <depends>ColorFilter</depends>
   <header>
     <file name="brg4_module.h"/>
   </header>
   <init fun="br_colour_init(&c_red)"/>
-  <periodic fun="br_colour_periodic(&c_red, &c_blue)" freq="2"/>
-  <periodic fun="br_detected_periodic()" freq="2"/>
+  <!--<periodic fun="br_colour_periodic(&c_red, &c_blue)" freq="0.05"/>
+  <periodic fun="br_detected_periodic()" freq="1"/>-->
   <makefile>
     <file name="brg4_module.c"/>
   </makefile>
