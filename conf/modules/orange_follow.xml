@@ -20,7 +20,7 @@
     <file name="orange_follow.h"/>
   </header>
   <init fun="follow_colour_init(c_see_orange)"/>
-  <periodic fun="follow_check_periodic()" freq="1"/>
+  <periodic fun="follow_check_periodic()" freq="10"/>
   <makefile>
     <file name="orange_follow.c"/>
   </makefile>

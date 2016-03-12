@@ -1,6 +1,6 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="1.5" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="20" name="Rotorcraft Optitrack (Delft)" security_height="0.3">
+<flight_plan alt="1.3" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="20" name="Rotorcraft Optitrack (Delft)" security_height="0.3">
   <header>
 #include "autopilot.h"
 #include "subsystems/ahrs.h"
@@ -73,11 +73,11 @@
       <exception cond="block_time > 5" deroute="ChangeHeading"/>
     </block>
     <block name="ChangeHeading">
-      <call fun="increase_nav_heading(&nav_heading, 90, FALSE)"/>
+      <call fun="increase_nav_heading(&nav_heading, 45, FALSE)"/>
       <exception cond="block_time > 5" deroute="MoveGoalForward"/>
     </block>
     <block name="MoveGoalForward">
-      <call fun="MoveRelative(WP_GOAL,2.0)"/>
+      <call fun="MoveRelative(WP_GOAL,1)"/>
       <deroute block="StayGoal"/>
     </block>    
     <!-- CUSTOM END -->

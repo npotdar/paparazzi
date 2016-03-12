@@ -21,7 +21,7 @@
 int thresholdColourCount = 100;
 int maxColourCount = 900;
 int thresholdHeading = 20; //Threshold for number of pixels from center for correct heading
-uint8_t headingIncrement = 3; // Change heading by this much to realign centre
+uint8_t headingIncrement = 15; // Change heading by this much to realign centre
 uint16_t imageWidth = 272; //Hardcoded image size in video_thread.c
 
 // Define the colours here

@@ -25,9 +25,9 @@
     <file name="v4l2.c" dir="modules/computer_vision/lib/v4l"/>
 
     <raw> ap.CFLAGS += -Wno-unused-function</raw>
-    <raw> ap.CFLAGS += $(shell pkg-config --cflags opencv)</raw>
+    <raw> ap.CFLAGS += $(shell pkg-config --static --cflags opencv)</raw>
     <raw> ap.LDFLAGS += -static</raw>
-    <raw> ap.LDFLAGS += $(shell pkg-config --libs opencv)</raw>
+    <raw> ap.LDFLAGS += -L/home/mavlabcourse/opencv/platforms/linux/build_hardfp/lib -lopencv_core</raw>
   </makefile>
   <makefile target="nps">
     <raw> nps.CFLAGS += -Wno-unused-function</raw>
