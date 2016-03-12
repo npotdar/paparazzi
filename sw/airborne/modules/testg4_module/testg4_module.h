@@ -17,5 +17,7 @@
 
 extern uint8_t spentLongTimeInBlock(int);
 
+extern uint8_t testWpId(uint8_t);
+
 #endif
 

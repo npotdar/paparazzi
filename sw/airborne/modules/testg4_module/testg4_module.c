@@ -19,3 +19,13 @@ extern uint8_t spentLongTimeInBlock (int timeInBlock){
 	return timeInBlock > 5;
 }
 
+extern uint8_t testWpId(uint8_t waypoint){
+	//printf("waypoint x coordinate is %f", waypoint_get_x(waypoint));
+	float wayx = waypoint_get_x(waypoint);
+	float wayy = waypoint_get_y(waypoint);
+	printf("waypoint x/y is: %f , %f \n", waypoint_get_x(waypoint),waypoint_get_y(waypoint));
+	waypoint_set_xy_i(waypoint, 0.5, 0.5);
+	printf("waypoint x/y is: %f , %f \n", waypoint_get_x(waypoint), waypoint_get_y(waypoint));
+	return false;
+}
+
