@@ -46,5 +46,7 @@ extern struct viewvideo_t viewvideo;
 // Module functions
 extern void viewvideo_init(void);
 
+extern struct UdpSocket video_sock;
+
 #endif /* VIEW_VIDEO_H */
 

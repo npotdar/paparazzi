@@ -37,6 +37,9 @@
 #include "lib/encoding/jpeg.h"
 #include "lib/encoding/rtp.h"
 
+#include "udp_socket.h"
+
+
 /* Default sonar/agl to use in opticflow visual_estimator */
 #ifndef OPTICFLOW_AGL_ID
 #define OPTICFLOW_AGL_ID ABI_BROADCAST    ///< Default sonar/agl to use in opticflow visual_estimator
@@ -49,7 +52,7 @@ PRINT_CONFIG_VAR(OPTICFLOW_AGL_ID)
 
 /* The video device */
 #ifndef OPTICFLOW_DEVICE
-#define OPTICFLOW_DEVICE /dev/video2      ///< The video device
+#define OPTICFLOW_DEVICE /dev/video1      ///< The video device
 #endif
 PRINT_CONFIG_VAR(OPTICFLOW_DEVICE)
 
