@@ -7,6 +7,9 @@
       Made for Linux video Devices.
       Computes x and y velocity using optical flow and distance to ground (using sonar).
     </description>
+    <configure name="BEBOP_FRONT_CAMERA_HOST" value="192.168.1.255" description="GCS IP (default: MODEM_HOST)"/>
+    <configure name="BEBOP_FRONT_CAMERA_PORT_OUT" value="5000" description="Port (default: 5000)"/>
+    <configure name="BEBOP_FRONT_CAMERA_BROADCAST" value="FALSE|TRUE" description="Enable broadcast of image stream (default: TRUE)"/>
 
     <!-- Optical flow calculation parameters -->
     <section name="OPTICFLOW" prefix="OPTICFLOW_">
@@ -16,7 +19,7 @@
       <define name="DEVICE" value="/dev/video1" description="The V4L2 camera device that is used for the calculations"/>
       <define name="DEVICE_SIZE" value="1408,2112" description="The V4L2 camera device width and height"/>
       <define name="DEVICE_BUFFERS" value="10" description="Amount of V4L2 video buffers"/>
-      <define name="SUBDEV" description="The V4L2 subdevice to initialize before the main device"/>
+      <define name="SUBDEV" value="TRUE" description="The V4L2 subdevice to initialize before the main device USED FOR RTP"/>
 
       <!-- Camera parameters -->
       <define name="FOV_W" value="0.89360857702" description="The field of view width of the bottom camera (Defaults are from an ARDrone 2)"/>
@@ -24,6 +27,7 @@
       <define name="FX" value="343.1211" description="Field in the x direction of the camera (Defaults are from an ARDrone 2)"/>
       <define name="FY" value="348.5053" description="Field in the y direction of the camera (Defaults are from an ARDrone 2)"/>
 
+      <define name="PROCESS_SIZE" value="272,272" description="Image size to process through opticflow width,height" />
       <!-- Lucas Kanade optical flow calculation parameters -->
       <define name="MAX_TRACK_CORNERS" value="25" description="The maximum amount of corners the Lucas Kanade algorithm is tracking between two frames"/>
       <define name="WINDOW_SIZE" value="10" description="Window size used in Lucas Kanade algorithm"/>
@@ -38,8 +42,11 @@
     </section>
     <section name="DEBUGGER">
       <define name="PERIODIC_TELEMETRY" value="TRUE" description="Send periodic telemetry of opticflow calculations" />
-      <define name="OPTICFLOW_DEBUG" value="FALSE" description="Visualise optical flow on video stream over RTP" />
+      <define name="OPTICFLOW_DEBUG" value="TRUE" description="Visualise optical flow on video stream over RTP" />
+      <define name="OPTICFLOW_SHOW_CORNERS" value="TRUE" description="Show optical flow corners "/>
+      <define name="OPTICFLOW_SHOW_FLOW" value="FALSE" description="Show optical flow" />
     </section>
+    
   </doc>
 
   <settings>
@@ -86,6 +93,26 @@
     <!-- Main vision calculations -->
     <file name="fast_rosten.c" dir="modules/computer_vision/lib/vision"/>
     <file name="lucas_kanade.c" dir="modules/computer_vision/lib/vision"/>
+
+    <define name="__USE_GNU"/>
+    <flag name="LDFLAGS" value="lrt"/>
+    <flag name="LDFLAGS" value="static-libgcc"/>
+
+    <raw>
+      include $(CFG_SHARED)/udp.makefile
+
+      BEBOP_FRONT_CAMERA_HOST        ?= $(MODEM_HOST)
+      BEBOP_FRONT_CAMERA_PORT_OUT    ?= 5000
+      BEBOP_FRONT_CAMERA_BROADCAST   ?= TRUE
+
+      BEBOPVIEWVID_CFLAGS  = -DBEBOP_FRONT_CAMERA_HOST=$(BEBOP_FRONT_CAMERA_HOST) -DBEBOP_FRONT_CAMERA_PORT_OUT=$(BEBOP_FRONT_CAMERA_PORT_OUT)
+      ifeq ($(BEBOP_FRONT_CAMERA_USE_NETCAT),)
+        ap.CFLAGS += $(BEBOPVIEWVID_CFLAGS) -DBEBOP_FRONT_CAMERA_BROADCAST=$(BEBOP_FRONT_CAMERA_BROADCAST)
+      else
+        ap.CFLAGS += $(BEBOPVIEWVID_CFLAGS) -DBEBOP_FRONT_CAMERA_USE_NETCAT
+      endif
+    </raw>
+
   </makefile>
 
 </module>

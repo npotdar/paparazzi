@@ -37,6 +37,8 @@
 #include "lib/encoding/jpeg.h"
 #include "lib/encoding/rtp.h"
 
+#include "lib/vision/bayer.h"
+
 #include "udp_socket.h"
 
 
@@ -71,6 +73,10 @@ PRINT_CONFIG_MSG("OPTICFLOW_DEVICE_SIZE = " _SIZE_HELPER(OPTICFLOW_DEVICE_SIZE))
 PRINT_CONFIG_VAR(OPTICFLOW_DEVICE_BUFFERS)
 
 /* The main opticflow variables */
+#ifndef OPTICFLOW_PROCESS_SIZE
+#define OPTICFLOW_PROCESS_SIZE 272,272     ///< Processed image size (width, height)
+#endif
+
 struct opticflow_t opticflow;                      ///< Opticflow calculations
 static struct opticflow_result_t opticflow_result; ///< The opticflow result
 static struct opticflow_state_t opticflow_state;   ///< State of the drone to communicate with the opticflow
@@ -83,6 +89,9 @@ static pthread_mutex_t opticflow_mutex;            ///< Mutex lock fo thread saf
 /* Static functions */
 static void *opticflow_module_calc(void *data);                   ///< The main optical flow calculation thread
 static void opticflow_agl_cb(uint8_t sender_id, float distance);  ///< Callback function of the ground altitude
+
+/* UDP Socket */
+static struct UdpSocket video_sock;
 
 #if PERIODIC_TELEMETRY
 #include "subsystems/datalink/telemetry.h"
@@ -119,7 +128,7 @@ void opticflow_module_init(void)
   opticflow_state.agl = 0;
 
   // Initialize the opticflow calculation
-  opticflow_calc_init(&opticflow, 272, 272);
+  opticflow_calc_init(&opticflow, OPTICFLOW_PROCESS_SIZE);
   opticflow_got_result = FALSE;
 
 #ifdef OPTICFLOW_SUBDEV
@@ -149,6 +158,10 @@ void opticflow_module_init(void)
 
 #if PERIODIC_TELEMETRY
   register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_OPTIC_FLOW_EST, opticflow_telem_send);
+#endif
+
+#if OPTICFLOW_DEBUG
+  udp_socket_create(&video_sock, STRINGIFY(BEBOP_FRONT_CAMERA_HOST), BEBOP_FRONT_CAMERA_PORT_OUT, -1, BEBOP_FRONT_CAMERA_BROADCAST);
 #endif
 }
 
@@ -260,9 +273,9 @@ static void *opticflow_module_calc(void *data __attribute__((unused)))
     pthread_mutex_unlock(&opticflow_mutex);
 
 #if OPTICFLOW_DEBUG
-    jpeg_encode_image(&img, &img_jpeg, 70, FALSE);
+    jpeg_encode_image(&img, &img_jpeg, 70, 0);
     rtp_frame_send(
-      &VIEWVIDEO_DEV,           // UDP device
+      &video_sock,           // UDP device
       &img_jpeg,
       0,                        // Format 422
       70, // Jpeg-Quality
