@@ -58,7 +58,7 @@ PRINT_CONFIG_VAR(OPTICFLOW_DEVICE)
 
 /* The video device size (width, height) */
 #ifndef OPTICFLOW_DEVICE_SIZE
-#define OPTICFLOW_DEVICE_SIZE 320,240     ///< The video device size (width, height)
+#define OPTICFLOW_DEVICE_SIZE 1408,2112     ///< The video device size (width, height)
 #endif
 #define __SIZE_HELPER(x, y) #x", "#y
 #define _SIZE_HELPER(x) __SIZE_HELPER(x)
@@ -106,7 +106,7 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
 #endif
 
 /**
- * Initialize the optical flow module for the bottom camera
+ * Initialize the optical flow module for NOT the bottom camera! Initialise for the bebop front camera!
  */
 void opticflow_module_init(void)
 {
@@ -119,23 +119,30 @@ void opticflow_module_init(void)
   opticflow_state.agl = 0;
 
   // Initialize the opticflow calculation
-  opticflow_calc_init(&opticflow, 320, 240);
+  opticflow_calc_init(&opticflow, 272, 272);
   opticflow_got_result = FALSE;
 
 #ifdef OPTICFLOW_SUBDEV
   PRINT_CONFIG_MSG("[opticflow_module] Configuring a subdevice!")
   PRINT_CONFIG_VAR(OPTICFLOW_SUBDEV)
 
-  /* Initialize the V4L2 subdevice (TODO: fix hardcoded path, which and code) */
+  // Initialize the V4L2 subdevice (TODO: fix hardcoded path, which and code)
+    if (!v4l2_init_subdev("/dev/v4l-subdev1", 0, 1, V4L2_MBUS_FMT_SGBRG10_1X10, OPTICFLOW_DEVICE_SIZE)) {
+      printf("[bebop_front_camera] Could not initialize the v4l-subdev1 subdevice.\n");
+      return;
+    }
+
+  /* Initialize the V4L2 subdevice (TODO: fix hardcoded path, which and code) NOT FOR BEBOP
   if (!v4l2_init_subdev(STRINGIFY(OPTICFLOW_SUBDEV), 0, 1, V4L2_MBUS_FMT_UYVY8_2X8, OPTICFLOW_DEVICE_SIZE)) {
     printf("[opticflow_module] Could not initialize the %s subdevice.\n", STRINGIFY(OPTICFLOW_SUBDEV));
     return;
-  }
+  } */
 #endif
 
   /* Try to initialize the video device */
-  opticflow_dev = v4l2_init(STRINGIFY(OPTICFLOW_DEVICE), OPTICFLOW_DEVICE_SIZE, OPTICFLOW_DEVICE_BUFFERS,
-                            V4L2_PIX_FMT_UYVY);
+  opticflow_dev = v4l2_init("/dev/video1", OPTICFLOW_DEVICE_SIZE, OPTICFLOW_DEVICE_BUFFERS, V4L2_PIX_FMT_SGBRG10);
+  //opticflow_dev = v4l2_init(STRINGIFY(OPTICFLOW_DEVICE), OPTICFLOW_DEVICE_SIZE, OPTICFLOW_DEVICE_BUFFERS, V4L2_PIX_FMT_UYVY);
+
   if (opticflow_dev == NULL) {
     printf("[opticflow_module] Could not initialize the video device\n");
   }

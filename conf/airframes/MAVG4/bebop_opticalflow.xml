@@ -36,25 +36,19 @@
     <load name="geo_mag.xml"/>
     <load name="air_data.xml"/>
     <load name="send_imu_mag_current.xml"/>
-    <load name="logger_file.xml">
+    <!--load name="logger_file.xml">
       <define name="FILE_LOGGER_PATH" value="/data/ftp/internal_000"/>
-    </load>
-    <load name="video_thread.xml">
+    </load-->
+    <!--load name="video_thread.xml">
       <define name="VIDEO_THREAD_FPS" value="4"/>
       <define name="VIDEO_THREAD_CAMERA" value="front_camera"/>
       <define name="VIDEO_THREAD_SHOT_PATH" value="/data/ftp/internal_000/images"/>
-    </load>
-    <load name="cv_opticflow.xml">
-      <define name="VIEWVIDEO_DEV" value="video_sock"/>
-      <define name="OPTICFLOW_DEBUG" value="true"/>
-      <define name="OPTICFLOW_SHOW_FLOW" value="true"/>
-    </load>
-    <load name="video_rtp_stream.xml">
+    </load-->
+    <load name="mavg4_opticflow.xml"/>
+    <!--load name="video_rtp_stream.xml">
       <define name="VIEWVIDEO_QUALITY_FACTOR" value="80"/>
       <define name="VIEWVIDEO_DOWNSIZE_FACTOR" value="1"/>
-    </load>
-	<!--<load name="cv_colorfilter.xml">
-    </load>-->
+    </load-->
   </modules>
 
   <commands>
@@ -259,4 +253,3 @@
     <define name="MAX_BAT_LEVEL" value="12.4" unit="V"/>
   </section>
 </airframe>
-
