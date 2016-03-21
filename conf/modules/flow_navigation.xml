@@ -1,0 +1,15 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="Flow_navigation_Module" dir="testg4_module">
+  <doc>
+    <description>Module for the flow navigation</description>
+  </doc>
+  <header>
+    <file name="flow_navigation.h"/>
+  </header>
+  <init fun="flow_navigation_init()"/>
+  <makefile>
+    <file name="flow_navigation.c"/>
+  </makefile>
+</module>
+
