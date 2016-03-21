@@ -58,6 +58,7 @@
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
     <block key="r" name="Start Engine">
+      <call fun="initialiseLines(WP__OZ1,WP__OZ2,WP__OZ3,WP__OZ4)"/>
       <call fun="NavResurrect()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
@@ -108,9 +109,14 @@
     	<stay wp="STDBY"/>
     </block>
     <block name="distance_test">
-    	<call fun="distToLine(WP_linetest1,WP_linetest2)"/>
-    	<stay wp="STDBY"/>
+    	<call fun="distToLine(WP_GOAL)"/>
+    	<stay wp="GOAL"/>
     </block>
+    <block name="auto_distance_test">
+    	<call fun="distToLine(WP_GOAL)"/>
+    	<go wp="GOAL"/>
+    	<deroute block="auto_distance_test"/>		
+	</block>
     <block name="GetOutOfObstacleZone">
       <call fun="moveWaypointForwards(WP_GOAL,0.5)"/>
       <call fun="chooseRandomIncrementAvoidance()"/>
