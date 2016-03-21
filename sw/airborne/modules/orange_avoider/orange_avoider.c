@@ -13,6 +13,7 @@
 #include "modules/orange_avoider/orange_avoider.h"
 #include "modules/computer_vision/colorfilter.h"
 #include "firmwares/rotorcraft/navigation.h"
+#include "subsystems/navigation/waypoints.h"
 #include "state.h"
 #include <time.h>
 #include <stdlib.h>
@@ -31,13 +32,14 @@ void orange_avoider_init() {
 	color_cr_max=255;
 	// Initialise random values
 	srand(time(NULL));
-	chooseRandomIncrementAvoidance();
+	//chooseRandomIncrementAvoidance();
+	incrementForAvoidance = 360;
 }
 void orange_avoider_periodic() {
 	// Check the amount of orange. If this is above a threshold
 	// you want to turn a certain amount of degrees
 	safeToGoForwards = color_count < tresholdColorCount;
-	printf("Checking if this funciton is called %d treshold: %d now: %d \n", color_count, tresholdColorCount, safeToGoForwards);
+	//printf("Checking if this funciton is called %d treshold: %d now: %d \n", color_count, tresholdColorCount, safeToGoForwards);
 }
 
 
@@ -51,6 +53,11 @@ uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
   INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
   return FALSE;
 }
+
+uint8_t testfun(uint8_t wp_id){
+	printf("WP ID is %u, x is %f\n",wp_id,waypoint_get_x(wp_id));
+	return FALSE;
+}
 uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	  struct EnuCoor_i new_coor;
 	  struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
@@ -58,11 +65,15 @@ uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	  // Calculate the sine and cosine of the heading the drone is keeping
 	  float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
 	  float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
+	  printf("heading is is: %ld, sin = %f, cos = %f\n",nav_heading,sin_heading,cos_heading);
+	  printf("distanceMeters = %f, x+ = %f, y+ = %f\n", distanceMeters,POS_BFP_OF_REAL(sin_heading * (distanceMeters)),POS_BFP_OF_REAL(cos_heading * (distanceMeters)));
 
 	  // Now determine where to place the waypoint you want to go to
 	  new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
 	  new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
 	  new_coor.z = pos->z; // Keep the height the same
+	  printf("x is: %ld\n",new_coor.x);
+	  printf("y is: %ld\n",new_coor.y);
 
 	  // Set the waypoint to the calculated position
 	  waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);

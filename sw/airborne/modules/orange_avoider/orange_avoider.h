@@ -16,6 +16,7 @@
 
 extern uint8_t safeToGoForwards;
 extern int32_t incrementForAvoidance;
+extern uint8_t testfun(uint8_t wp_id);
 extern void orange_avoider_init(void);
 extern void orange_avoider_periodic(void);
 extern uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters);
