@@ -26,7 +26,7 @@
  */
 
 
-#include "opticflow_module.h"
+#include "mavg4_opticflow_module.h"
 
 #include <stdio.h>
 #include <pthread.h>
@@ -35,18 +35,6 @@
 
 #include "lib/v4l/v4l2.h"
 #include "lib/encoding/jpeg.h"
-#include "lib/encoding/rtp.h"
-
-#include "lib/vision/bayer.h"
-
-#include "udp_socket.h"
-
-
-/* Default sonar/agl to use in opticflow visual_estimator */
-#ifndef OPTICFLOW_AGL_ID
-#define OPTICFLOW_AGL_ID ABI_BROADCAST    ///< Default sonar/agl to use in opticflow visual_estimator
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_AGL_ID)
 
 #ifndef OPTICFLOW_SENDER_ID
 #define OPTICFLOW_SENDER_ID 1
@@ -81,16 +69,12 @@ struct opticflow_t opticflow;                      ///< Opticflow calculations
 static struct opticflow_result_t opticflow_result; ///< The opticflow result
 static struct opticflow_state_t opticflow_state;   ///< State of the drone to communicate with the opticflow
 static struct v4l2_device *opticflow_dev;          ///< The opticflow camera V4L2 device
-static abi_event opticflow_agl_ev;                 ///< The altitude ABI event
 static pthread_t opticflow_calc_thread;            ///< The optical flow calculation thread
 static bool_t opticflow_got_result;                ///< When we have an optical flow calculation
 static pthread_mutex_t opticflow_mutex;            ///< Mutex lock fo thread safety
 
 /* Static functions */
 static void *opticflow_module_calc(void *data);                   ///< The main optical flow calculation thread
-static void opticflow_agl_cb(uint8_t sender_id, float distance);  ///< Callback function of the ground altitude
-
-int Ireacher=0;
 
 #if PERIODIC_TELEMETRY
 #include "subsystems/datalink/telemetry.h"
@@ -119,7 +103,7 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
 void opticflow_module_init(void)
 {
   // Subscribe to the altitude above ground level ABI messages
-  AbiBindMsgAGL(OPTICFLOW_AGL_ID, &opticflow_agl_ev, opticflow_agl_cb);
+  //AbiBindMsgAGL(OPTICFLOW_AGL_ID, &opticflow_agl_ev, opticflow_agl_cb);
 
   // Set the opticflow state to 0
   opticflow_state.phi = 0;
@@ -271,7 +255,6 @@ static void *opticflow_module_calc(void *data __attribute__((unused)))
 
 
 #if OPTICFLOW_DEBUG
-    Ireacher =1;
     jpeg_encode_image(&img, &img_jpeg, 70, 0);
     rtp_frame_send(
       &video_sock,           // UDP device
@@ -292,15 +275,3 @@ static void *opticflow_module_calc(void *data __attribute__((unused)))
 #endif
 }
 
-/**
- * Get the altitude above ground of the drone
- * @param[in] sender_id The id that send the ABI message (unused)
- * @param[in] distance The distance above ground level in meters
- */
-static void opticflow_agl_cb(uint8_t sender_id __attribute__((unused)), float distance)
-{
-  // Update the distance if we got a valid measurement
-  if (distance > 0) {
-    opticflow_state.agl = distance;
-  }
-}

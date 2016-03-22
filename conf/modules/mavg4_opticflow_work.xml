@@ -16,7 +16,7 @@
 
       <!-- Camera parameters -->
       <define name="PROCESS_SIZE" value="272,272" description="Image size to process through opticflow width,height" />
-      <define name="PADDING" value="50,50" description="FAST padding of image to define not to track edge of image points"
+      <define name="PADDING" value="50,50" description="FAST padding of image to define not to track edge of image points" />
 
       <!-- Lucas Kanade optical flow calculation parameters -->
       <define name="MAX_TRACK_CORNERS" value="25" description="The maximum amount of corners the Lucas Kanade algorithm is tracking between two frames"/>

@@ -1985,13 +1985,7 @@
     <field name="divergence"    type="float" unit="1/s"/>
   </message>
 
-  <message name="OPTIC_FLOW_MAVG4" id="252">
-    <field name="fps"         type="float"/>
-    <field name="corner_cnt"  type="uint16"/>
-    <field name="tracked_cnt" type="uint16"/>
-    <field name="flow_x"      type="int16" unit="subpixels"/>
-    <field name="flow_y"      type="int16" unit="subpixels"/>
-  </message>
+
 
   <message name="STEREO_IMG" id="229">
     <field name="frequency" type="uint8"/>
@@ -1999,6 +1993,13 @@
     <field name="imageBuffer" type="uint8[]"/>
   </message>
 
+  <message name="OFG" id="230">
+    <field name="fps"         type="float"/>
+    <field name="corner_cnt"  type="uint16"/>
+    <field name="tracked_cnt" type="uint16"/>
+    <field name="flow_x"      type="int16" unit="subpixels"/>
+    <field name="flow_y"      type="int16" unit="subpixels"/>
+  </message>
   <!--230 is free -->
 
   <message name="ROTORCRAFT_STATUS" id="231">

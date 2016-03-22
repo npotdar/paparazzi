@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <pthread.h>
+//#include "opticflow/inter_thread_data.h"
 #include "state.h"
 #include "subsystems/abi.h"
 
@@ -14,8 +15,6 @@
 #include "lib/vision/image.h"
 #include "lib/vision/lucas_kanade.h"
 #include "lib/vision/fast_rosten.h"
-
-#define OPTICFLOW_TELE_ID 1
 
 
 /* ### Defaults defined for opticalflow SEE .H FILE!!! ###*/
@@ -75,7 +74,7 @@ PRINT_CONFIG_VAR(OPTICFLOW_FAST9_MIN_DISTANCE)
 
 /* ### Storage variables ### */
 struct opticflow_t opticflow;						// Opticflow calculations
-static struct opticflow_results_t opticflow_result;	// Opticflow results
+static struct opticflow_result_t opticflow_result;	// Opticflow results
 static struct v4l2_device *opticflow_dev;			// The opticflow camera V4L2 device
 static bool_t opticflow_got_result;                	// When we have an optical flow calculation
 
@@ -85,12 +84,13 @@ static pthread_t opticflow_calc_thread;            	// The optical flow calculat
 static pthread_mutex_t opticflow_mutex;            	// Mutex lock for thread safety
 
 /* ### Functions ### */
-static void opticflow_module_run(void); 				// Dummy function
+//static void opticflow_module_run(void); 				// Dummy function
 static void *opticflow_module_calc(void *data);		// Main optical flow calculation thread
-static void opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img,
-									struct opticflow_result_t *result);
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime);		// Calculation of timedifference for FPS
 static int cmp_flow(const void *a, const void *b);
+
+
+void opticflow_module_run(void){};
 
 #if PERIODIC_TELEMETRY
 #include "subsystems/datalink/telemetry.h"
@@ -102,9 +102,9 @@ static int cmp_flow(const void *a, const void *b);
 static void opticflow_telem_send(struct transport_tx *trans, struct link_device *dev)
 {
   pthread_mutex_lock(&opticflow_mutex);
-  pprz_msg_send_OPTIC_FLOW_MAVG4(trans, dev, AC_ID,
+  pprz_msg_send_OFG(trans, dev, AC_ID,
                                &opticflow_result.fps, &opticflow_result.corner_cnt,
-                               &opticflow_result.tracked_cnt, &opticflow_result.flow_x);
+                               &opticflow_result.tracked_cnt, &opticflow_result.flow_x, &opticflow_result.flow_y);
   pthread_mutex_unlock(&opticflow_mutex);
 }
 #endif
@@ -119,22 +119,24 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
 void opticflow_module_init(void){
 	/* Initialise optical flow calculations */
 	// Create the image buffers
-	image_create(&opticflow->img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
-	image_create(&opticflow->prev_img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
+	struct opticflow_t *opticflowp = &opticflow;
+
+	image_create(&opticflowp->img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
+	image_create(&opticflowp->prev_img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
 
 	//Set the previous values
-	opticflow->got_first_img = FALSE;
+	opticflowp->got_first_img = FALSE;
 
 	// Set the default values */
-	opticflow->max_track_corners = OPTICFLOW_MAX_TRACK_CORNERS;
-	opticflow->window_size = OPTICFLOW_WINDOW_SIZE;
-	opticflow->subpixel_factor = OPTICFLOW_SUBPIXEL_FACTOR;
-	opticflow->max_iterations = OPTICFLOW_MAX_ITERATIONS;
-	opticflow->threshold_vec = OPTICFLOW_THRESHOLD_VEC;
+	opticflowp->max_track_corners = OPTICFLOW_MAX_TRACK_CORNERS;
+	opticflowp->window_size = OPTICFLOW_WINDOW_SIZE;
+	opticflowp->subpixel_factor = OPTICFLOW_SUBPIXEL_FACTOR;
+	opticflowp->max_iterations = OPTICFLOW_MAX_ITERATIONS;
+	opticflowp->threshold_vec = OPTICFLOW_THRESHOLD_VEC;
 
-	opticflow->fast9_adaptive = OPTICFLOW_FAST9_ADAPTIVE;
-	opticflow->fast9_threshold = OPTICFLOW_FAST9_THRESHOLD;
-	opticflow->fast9_min_distance = OPTICFLOW_FAST9_MIN_DISTANCE;
+	opticflowp->fast9_adaptive = OPTICFLOW_FAST9_ADAPTIVE;
+	opticflowp->fast9_threshold = OPTICFLOW_FAST9_THRESHOLD;
+	opticflowp->fast9_min_distance = OPTICFLOW_FAST9_MIN_DISTANCE;
 
 	opticflow_got_result = FALSE;
 
@@ -150,6 +152,9 @@ void opticflow_module_init(void){
 	// Initialise the main video device
 	opticflow_dev = v4l2_init("/dev/video1", OPTICFLOW_DEVICE_SIZE, OPTICFLOW_DEVICE_BUFFERS, V4L2_PIX_FMT_SGBRG10);
 
+	#if PERIODIC_TELEMETRY
+	  register_periodic_telemetry(DefaultPeriodic, PPRZ_MSG_ID_OFG, opticflow_telem_send);
+	#endif
 }
 
 /****************************************************************
@@ -183,7 +188,9 @@ void opticflow_module_stop(void)
   v4l2_stop_capture(opticflow_dev);
 
   // Cancel the opticalflow calculation thread
-  pthread_cancel(&opticflow_calc_thread);
+  if(pthread_cancel(&opticflow_calc_thread)!=0){
+	  printf("Thread killing did not work\n");
+  }
 }
 
 
@@ -198,7 +205,7 @@ void opticflow_module_stop(void)
  * calculator using FAST corner detection and Lucas Kanade tracking
  */
 
-static void *opticflow_module_calc(void *data __attribute__((unused))){
+void *opticflow_module_calc(void *data __attribute__((unused))){
 	// Start the straming on the V4L2 device
 	if (!v4l2_start_capture(opticflow_dev)) {
 	    printf("[opticflow_module] Could not start capture of the camera\n");
@@ -238,40 +245,40 @@ static void *opticflow_module_calc(void *data __attribute__((unused))){
  * OPTICAL FLOW FUNCTION
  ****************************************************************/
 
-static void opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img,
+void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 									struct opticflow_result_t *result){
 	// Update FPS for information
-	result->fps = 1/(timeval_diff(&opticflow->prev_timestamp,&img->ts) / 1000.);
-	memcpy(&opticflow->prev_timestamp,&img->ts,sizeof(struct timeval));
+	result->fps = 1/(timeval_diff(&opticflowin->prev_timestamp,&img->ts) / 1000.);
+	memcpy(&opticflowin->prev_timestamp,&img->ts,sizeof(struct timeval));
 
 	// Convert image to grayscale
-	image_to_grayscale(img, &opticflow->img_gray);
+	image_to_grayscale(img, &opticflowin->img_gray);
 
 	// Copy to previous image if not set
-	if(!opticflow->got_first_img){
-		image_copy(&opticflow->img_gray, &opticflow->prev_img_gray);
-		opticflow->got_first_img = TRUE;
+	if(!opticflowin->got_first_img){
+		image_copy(&opticflowin->img_gray, &opticflowin->prev_img_gray);
+		opticflowin->got_first_img = TRUE;
 	}
 
 	/* Corner detection */
 	// FAST corner detection
-	struct point_t *corners = fast9_detect(img, opticflow->fast9_threshold, opticflow->fast9_min_distance,
+	struct point_t *corners = fast9_detect(img, opticflowin->fast9_threshold, opticflowin->fast9_min_distance,
 											OPTICFLOW_PADDING, &result->corner_cnt);
 
 	// FAST Adaptive threshold
-	if (opticflow->fast9_adaptive){
+	if (opticflowin->fast9_adaptive){
 		// Decrease and increase the threshold based on previous values TUNABLE!!!
-		if (result->corner_cnt < 40 && opticflow->fast9_threshold > 5) {
-		  opticflow->fast9_threshold--;
-		} else if (result->corner_cnt > 50 && opticflow->fast9_threshold < 60) {
-		  opticflow->fast9_threshold++;
+		if (result->corner_cnt < 40 && opticflowin->fast9_threshold > 5) {
+		  opticflowin->fast9_threshold--;
+		} else if (result->corner_cnt > 50 && opticflowin->fast9_threshold < 60) {
+		  opticflowin->fast9_threshold++;
 		}
 	}
 
 	// FAST Check if corners were detected
 	if (result->corner_cnt < 1){
 		free(corners);
-		image_copy(&opticflow->img_gray, &opticflow->prev_img_gray);
+		image_copy(&opticflowin->img_gray, &opticflowin->prev_img_gray);
 		return;
 	}
 
@@ -279,9 +286,9 @@ static void opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *
 	// LUCAS-KANADE optical flow
 	result->tracked_cnt = result->corner_cnt; 		// Sets tracked number of corners to corners detected by FAST
 
-	struct flow_t *vectors = opticFlowLK(&opticflow->img_gray, &opticflow->prev_img_gray, corners, &result->tracked_cnt,
-            opticflow->window_size / 2, opticflow->subpixel_factor, opticflow->max_iterations,
-            opticflow->threshold_vec, opticflow->max_track_corners);
+	struct flow_t *vectors = opticFlowLK(&opticflowin->img_gray, &opticflowin->prev_img_gray, corners, &result->tracked_cnt,
+            opticflowin->window_size / 2, opticflowin->subpixel_factor, opticflowin->max_iterations,
+            opticflowin->threshold_vec, opticflowin->max_track_corners);
 
 	/* Do something with the flow EDIT HERE*/
 	// Get the median flow

@@ -2,7 +2,7 @@
 #define MAVG4_OPTICFLOW_H
 
 #include "std.h"
-#include "inter_thread_data.h"
+//#include "opticflow/inter_thread_data.h"
 #include "lib/vision/image.h"
 #include "lib/v4l/v4l2.h"
 
@@ -24,6 +24,16 @@ struct opticflow_t {
   uint16_t fast9_min_distance;      ///< Minimum distance in pixels between corners
 };
 
+/* The result calculated from the opticflow */
+struct opticflow_result_t {
+  float fps;              ///< Frames per second of the optical flow calculation
+  uint16_t corner_cnt;    ///< The amount of coners found by FAST9
+  uint16_t tracked_cnt;   ///< The amount of tracked corners
+
+  int16_t flow_x;         ///< Flow in x direction from the camera (in subpixels)
+  int16_t flow_y;         ///< Flow in y direction from the camera (in subpixels)
+};
+
 // Required for settings
 extern struct opticflow_t opticflow;
 
@@ -32,5 +42,5 @@ extern void opticflow_module_init(void);
 extern void opticflow_module_run(void);
 extern void opticflow_module_start(void);
 extern void opticflow_module_stop(void);
-
+void opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img, struct opticflow_result_t *result);
 #endif
