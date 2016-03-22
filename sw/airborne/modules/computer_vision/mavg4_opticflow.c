@@ -15,49 +15,20 @@
 #include "lib/vision/image.h"
 #include "lib/vision/lucas_kanade.h"
 #include "lib/vision/fast_rosten.h"
+#include "lib/vision/bayer.h"
 
+#include "lib/encoding/rtp.h"
+#include "udp_socket.h"
 
 /* ### Defaults defined for opticalflow SEE .H FILE!!! ###*/
-#ifndef OPTICFLOW_MAX_TRACK_CORNERS
 #define OPTICFLOW_MAX_TRACK_CORNERS 25
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_MAX_TRACK_CORNERS)
-
-#ifndef OPTICFLOW_WINDOW_SIZE
-#define OPTICFLOW_WINDOW_SIZE 10
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_WINDOW_SIZE)
-
-#ifndef OPTICFLOW_SUBPIXEL_FACTOR
+#define OPTICFLOW_WINDOW_SIZE 100
 #define OPTICFLOW_SUBPIXEL_FACTOR 10
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_SUBPIXEL_FACTOR)
-
-#ifndef OPTICFLOW_MAX_ITERATIONS
 #define OPTICFLOW_MAX_ITERATIONS 10
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_MAX_ITERATIONS)
-
-#ifndef OPTICFLOW_THRESHOLD_VEC
 #define OPTICFLOW_THRESHOLD_VEC 2
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_THRESHOLD_VEC)
-
-#ifndef OPTICFLOW_FAST9_ADAPTIVE
 #define OPTICFLOW_FAST9_ADAPTIVE TRUE
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_FAST9_ADAPTIVE)
-
-#ifndef OPTICFLOW_FAST9_THRESHOLD
-#define OPTICFLOW_FAST9_THRESHOLD 20
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_FAST9_THRESHOLD)
-
-#ifndef OPTICFLOW_FAST9_MIN_DISTANCE
-#define OPTICFLOW_FAST9_MIN_DISTANCE 10
-#endif
-PRINT_CONFIG_VAR(OPTICFLOW_FAST9_MIN_DISTANCE)
-
+#define OPTICFLOW_FAST9_THRESHOLD 5
+#define OPTICFLOW_FAST9_MIN_DISTANCE 40
 
 /* ### Defaults defined for bebop ###*/
 #define OPTICFLOW_DEVICE /dev/video1				// Path to video device
@@ -68,11 +39,21 @@ PRINT_CONFIG_VAR(OPTICFLOW_FAST9_MIN_DISTANCE)
 #define OPTICFLOW_DEVICE_BUFFERS 15					// (int) | Video device V4L2 buffers
 
 /* Optical flow variables */
-#define OPTICFLOW_PADDING 50,50 				// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
-#define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size
+#define OPTICFLOW_PADDING 0,0 				// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
+#define OPTICFLOW_PROCESS_SIZE 544,544			// (int) width [px], (int) height [px] | Processed image size
 
+/* Debugging */
+#define PERIODIC_TELEMETRY TRUE
+#define OPTICFLOW_DEBUG TRUE
+#define VIDEO_THREAD_SHOT_PATH "/data/ftp/internal_000/images"
+#define VIDEO_SIZE 544,544
 
 /* ### Storage variables ### */
+#if OPTICFLOW_DEBUG
+	  struct UdpSocket video_sock;
+	  //struct image_t img_jpeg;
+#endif
+
 struct opticflow_t opticflow;						// Opticflow calculations
 static struct opticflow_result_t opticflow_result;	// Opticflow results
 static struct v4l2_device *opticflow_dev;			// The opticflow camera V4L2 device
@@ -83,12 +64,14 @@ static pthread_t opticflow_calc_thread;            	// The optical flow calculat
 
 static pthread_mutex_t opticflow_mutex;            	// Mutex lock for thread safety
 
+
+
 /* ### Functions ### */
 //static void opticflow_module_run(void); 				// Dummy function
 static void *opticflow_module_calc(void *data);		// Main optical flow calculation thread
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime);		// Calculation of timedifference for FPS
 static int cmp_flow(const void *a, const void *b);
-
+static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number);
 
 void opticflow_module_run(void){};
 
@@ -121,6 +104,7 @@ void opticflow_module_init(void){
 	// Create the image buffers
 	struct opticflow_t *opticflowp = &opticflow;
 
+	// Create images to be used by FAST and Lucas Kanade
 	image_create(&opticflowp->img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
 	image_create(&opticflowp->prev_img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
 
@@ -165,7 +149,7 @@ void opticflow_module_init(void){
  * Start the optical flow calculation
  */
 void opticflow_module_start(void){
-	// Check if we not already running
+	// Check if we are not already running
 	if (opticflow_calc_thread != 0) {
 	    printf("[opticflow_module] Opticflow already started!\n");
 	    return;
@@ -188,7 +172,7 @@ void opticflow_module_stop(void)
   v4l2_stop_capture(opticflow_dev);
 
   // Cancel the opticalflow calculation thread
-  if(pthread_cancel(&opticflow_calc_thread)!=0){
+  if(pthread_cancel(opticflow_calc_thread)!=0){
 	  printf("Thread killing did not work\n");
   }
 }
@@ -206,16 +190,32 @@ void opticflow_module_stop(void)
  */
 
 void *opticflow_module_calc(void *data __attribute__((unused))){
+
 	// Start the straming on the V4L2 device
 	if (!v4l2_start_capture(opticflow_dev)) {
 	    printf("[opticflow_module] Could not start capture of the camera\n");
 	    return 0;
 	  }
 
+	// Create the images for streaming purposes only!
+#if OPTICFLOW_DEBUG
+	struct image_t img_color;
+	image_create(&img_color, VIDEO_SIZE, IMAGE_YUV422);
+	struct image_t img_jpeg;
+	image_create(&img_jpeg, VIDEO_SIZE, IMAGE_JPEG);
+#endif
+
+	if(OPTICFLOW_DEBUG){
+	  udp_socket_create(&video_sock, STRINGIFY(BEBOP_FRONT_CAMERA_HOST), 5000, -1, TRUE);
+	};
+
 	/* Main loop of the optic flow calculation	 */
+	//int counter = 1;
 	while(TRUE){
 		/* Define image */
 		struct image_t img;
+
+		// Get image from v4l2 with native size
 		v4l2_image_get(opticflow_dev, &img);
 
 		/* Do optical flow calculations */
@@ -229,9 +229,30 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 		opticflow_got_result = TRUE;
 		pthread_mutex_unlock(&opticflow_mutex);
 
+		if(OPTICFLOW_DEBUG){
+			//jpeg_encode_image(&img, &img_jpeg, 70, 0);
+			BayerToYUV(&img, &img_color, 0, 0);
+			//video_thread_save_shot(&img_color, &img_jpeg, counter);
+			jpeg_encode_image(&img_color, &img_jpeg, 80, 0);
+			rtp_frame_send(
+			  &video_sock,           // UDP device
+			  &img_jpeg,
+			  0,                        // Format 422
+			  80, // Jpeg-Quality
+			  0,                        // DRI Header
+			  0                         // 90kHz time increment
+			);
+		};
+
 		/* Free image */
 		v4l2_image_free(opticflow_dev, &img);
 	}
+
+	if(OPTICFLOW_DEBUG){
+	  image_free(&img_jpeg);
+	  image_free(&img_color);
+	};
+	//counter++;
 }
 
 /**
@@ -251,7 +272,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	result->fps = 1/(timeval_diff(&opticflowin->prev_timestamp,&img->ts) / 1000.);
 	memcpy(&opticflowin->prev_timestamp,&img->ts,sizeof(struct timeval));
 
-	// Convert image to grayscale
+	// Convert image to grayscale uses PROCESS_SIZE
 	image_to_grayscale(img, &opticflowin->img_gray);
 
 	// Copy to previous image if not set
@@ -275,6 +296,9 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		}
 	}
 
+	image_show_points(img, corners, result->corner_cnt);
+
+
 	// FAST Check if corners were detected
 	if (result->corner_cnt < 1){
 		free(corners);
@@ -290,28 +314,41 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
             opticflowin->window_size / 2, opticflowin->subpixel_factor, opticflowin->max_iterations,
             opticflowin->threshold_vec, opticflowin->max_track_corners);
 
+	image_show_flow(img, vectors, result->tracked_cnt, opticflowin->subpixel_factor);
+
 	/* Do something with the flow EDIT HERE*/
 	// Get the median flow
-	  qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), cmp_flow);
-	  if (result->tracked_cnt == 0) {
-	    // We got no flow
-	    result->flow_x = 0;
-	    result->flow_y = 0;
-	  } else if (result->tracked_cnt > 3) {
-	    // Take the average of the 3 median points
-	    result->flow_x = vectors[result->tracked_cnt / 2 - 1].flow_x;
-	    result->flow_y = vectors[result->tracked_cnt / 2 - 1].flow_y;
-	    result->flow_x += vectors[result->tracked_cnt / 2].flow_x;
-	    result->flow_y += vectors[result->tracked_cnt / 2].flow_y;
-	    result->flow_x += vectors[result->tracked_cnt / 2 + 1].flow_x;
-	    result->flow_y += vectors[result->tracked_cnt / 2 + 1].flow_y;
-	    result->flow_x /= 3;
-	    result->flow_y /= 3;
-	  } else {
-	    // Take the median point
-	    result->flow_x = vectors[result->tracked_cnt / 2].flow_x;
-	    result->flow_y = vectors[result->tracked_cnt / 2].flow_y;
-	  }
+	qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), cmp_flow);
+	if (result->tracked_cnt == 0) {
+	// We got no flow
+	result->flow_x = 0;
+	result->flow_y = 0;
+	} else if (result->tracked_cnt > 3) {
+	// Take the average of the 3 median points
+	result->flow_x = vectors[result->tracked_cnt / 2 - 1].flow_x;
+	result->flow_y = vectors[result->tracked_cnt / 2 - 1].flow_y;
+	result->flow_x += vectors[result->tracked_cnt / 2].flow_x;
+	result->flow_y += vectors[result->tracked_cnt / 2].flow_y;
+	result->flow_x += vectors[result->tracked_cnt / 2 + 1].flow_x;
+	result->flow_y += vectors[result->tracked_cnt / 2 + 1].flow_y;
+	result->flow_x /= 3;
+	result->flow_y /= 3;
+	} else {
+	// Take the median point
+	result->flow_x = vectors[result->tracked_cnt / 2].flow_x;
+	result->flow_y = vectors[result->tracked_cnt / 2].flow_y;
+	}
+
+	int iter;
+	for(iter=0; iter<result->tracked_cnt; iter++){
+		printf("%d, ",vectors[iter]);
+	}
+	printf("\n");
+
+	/* Next loop preperations */
+	free(corners);
+	free(vectors);
+	image_switch(&opticflow->img_gray, &opticflow->prev_img_gray);
 }
 
 
@@ -346,4 +383,37 @@ static int cmp_flow(const void *a, const void *b)
   const struct flow_t *b_p = (const struct flow_t *)b;
   return (a_p->flow_x * a_p->flow_x + a_p->flow_y * a_p->flow_y) - (b_p->flow_x * b_p->flow_x + b_p->flow_y *
          b_p->flow_y);
+}
+
+
+static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number)
+{
+
+  // Search for a file where we can write to
+  char save_name[128];
+  for (; shot_number < 99999; shot_number++) {
+    sprintf(save_name, "%s/img_%05d.jpg", VIDEO_THREAD_SHOT_PATH, shot_number);
+    // Check if file exists or not
+    if (access(save_name, F_OK) == -1) {
+
+      // Create a high quality image (99% JPEG encoded)
+      jpeg_encode_image(img, img_jpeg, 99, TRUE);
+
+//#if JPEG_WITH_EXIF_HEADER
+//      write_exif_jpeg(save_name, img_jpeg->buf, img_jpeg->buf_size, img_jpeg->w, img_jpeg->h);
+//#else
+      FILE *fp = fopen(save_name, "w");
+      if (fp == NULL) {
+        printf("[video_thread-thread] Could not write shot %s.\n", save_name);
+      } else {
+        // Save it to the file and close it
+        fwrite(img_jpeg->buf, sizeof(uint8_t), img_jpeg->buf_size, fp);
+        fclose(fp);
+      }
+//#endif
+
+      // We don't need to seek for a next index anymore
+      break;
+    }
+  }
 }

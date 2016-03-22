@@ -167,6 +167,9 @@ struct flow_t *opticFlowLK(struct image_t *new_img, struct image_t *old_img, str
       new_p++;
       (*points_cnt)++;
     }
+
+    //Printf
+    //printf("x: %f, y: %f, flowx: %d, flowy: %d \n", (float)(vectors[new_p].pos.x)/subpixel_factor, (float)(vectors[new_p].pos.y)/subpixel_factor, vectors[new_p].flow_x, vectors[new_p].flow_y);
   }
 
   // Free the images

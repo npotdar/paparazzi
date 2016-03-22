@@ -6,6 +6,11 @@
       Compute optical flow.
       Made for Linux video Devices.
     </description>
+
+    <configure name="BEBOP_FRONT_CAMERA_HOST" value="192.168.1.255" description="GCS IP (default: MODEM_HOST)"/>
+    <configure name="BEBOP_FRONT_CAMERA_PORT_OUT" value="5000" description="Port (default: 5000)"/>
+    <configure name="BEBOP_FRONT_CAMERA_BROADCAST" value="FALSE|TRUE" description="Enable broadcast of image stream (default: TRUE)"/>
+
     <!-- Optical flow calculation parameters -->
     <section name="OPTICFLOW" prefix="OPTICFLOW_">
       <!-- Video device parameters -->
@@ -68,6 +73,7 @@
     <file name="image.c" dir="modules/computer_vision/lib/vision"/>
     <file name="jpeg.c" dir="modules/computer_vision/lib/encoding"/>
     <file name="v4l2.c" dir="modules/computer_vision/lib/v4l"/>
+    <file name="rtp.c" dir="modules/computer_vision/lib/encoding"/>
 
     <!-- The optical flow module (calculator) -->
     <file name="mavg4_opticflow.c"/>
@@ -77,6 +83,23 @@
     <!-- Main vision calculations -->
     <file name="fast_rosten.c" dir="modules/computer_vision/lib/vision"/>
     <file name="lucas_kanade.c" dir="modules/computer_vision/lib/vision"/>
+
+    <!-- For Streaming -->
+    <raw>
+      include $(CFG_SHARED)/udp.makefile
+
+      BEBOP_FRONT_CAMERA_HOST        ?= $(MODEM_HOST)
+      BEBOP_FRONT_CAMERA_PORT_OUT    ?= 5000
+      BEBOP_FRONT_CAMERA_BROADCAST   ?= TRUE
+      BEBOP_FRONT_CAMERA_USE_NETCAT  ?= FALSE
+
+      BEBOPVIEWVID_CFLAGS  = -DBEBOP_FRONT_CAMERA_HOST=$(BEBOP_FRONT_CAMERA_HOST) -DBEBOP_FRONT_CAMERA_PORT_OUT=$(BEBOP_FRONT_CAMERA_PORT_OUT)
+      ifeq ($(BEBOP_FRONT_CAMERA_USE_NETCAT),)
+        ap.CFLAGS += $(BEBOPVIEWVID_CFLAGS) -DBEBOP_FRONT_CAMERA_BROADCAST=$(BEBOP_FRONT_CAMERA_BROADCAST)
+      else
+        ap.CFLAGS += $(BEBOPVIEWVID_CFLAGS) -DBEBOP_FRONT_CAMERA_USE_NETCAT
+      endif
+    </raw>
 
   </makefile>
 
