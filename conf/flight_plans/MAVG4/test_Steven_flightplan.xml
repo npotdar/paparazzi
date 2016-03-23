@@ -75,9 +75,8 @@
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
     </block>
     <block name="StayGoal">
-   	  <call fun="distToLine(4.0,3.0,2.0,2.0)"/>
-      <go wp="GOAL"/>
-      <exception cond="block_time > 3" deroute="MoveGoalForward"/>
+      <stay wp="GOAL"/>
+      <!--exception cond="block_time > 3" deroute="MoveGoalForward"/>-->
       <!--exception cond="!safeToGoForwards" deroute="ChangeHeading"/>
       <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
     </block>
@@ -109,8 +108,12 @@
     	<stay wp="STDBY"/>
     </block>
     <block name="distance_test">
+    	<while cond="1">
     	<call fun="distToLine(WP_GOAL)"/>
+    	<!--deroute block="Standby"/>-->
     	<stay wp="GOAL"/>
+    	</while>
+    	<!--stay wp="GOAL"/>-->
     </block>
     <block name="auto_distance_test">
     	<call fun="distToLine(WP_GOAL)"/>

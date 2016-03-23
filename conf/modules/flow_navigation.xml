@@ -4,10 +4,23 @@
   <doc>
     <description>Module for the flow navigation</description>
   </doc>
+  <settings>
+    <dl_settings>
+      <dl_settings NAME="FlowNavigation">
+         <dl_setting var="incrx" min="-0.5" step="0.1" max="0.5" shortname="incrx" />
+         <dl_setting var="incry" min="-0.5" step="0.1" max="0.5" shortname="incry" />
+         <dl_setting var="distthresh" min="0" step="0.1" max="2" shortname="distance_threshold_wall" />
+         <dl_setting var="wallscale" min="0" step="0.02" max="0.3" shortname="wall_multiplier" />
+         <dl_setting var="objectscale" min="-0.2" step="0.01" max="0" shortname="object_multiplier" />
+         <dl_setting var="objectdet" min="-5" step="0.5" max="5" shortname="object_detected" />
+      </dl_settings>
+    </dl_settings>
+  </settings>
   <header>
     <file name="flow_navigation.h"/>
   </header>
   <init fun="flow_navigation_init()"/>
+  <periodic fun="distToLine(3)" freq="10"/>
   <makefile>
     <file name="flow_navigation.c"/>
   </makefile>
