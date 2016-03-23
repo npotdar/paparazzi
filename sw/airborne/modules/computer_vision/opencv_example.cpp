@@ -45,10 +45,10 @@ int opencv_example(char* img, int width, int height)
 	cvtColor(M, image, CV_YUV2GRAY_Y422);
 
 	// Blur it, because we can
-	blur(image, image, Size(5,5));
+	blur(image, image, Size(2,2));
 
 	// Canny edges, only works with grayscale image
-	int edgeThresh=35;
+	int edgeThresh=5;
 	Canny(image, image, edgeThresh, edgeThresh*3);
 
 	// Convert back to YUV422, and put it in place of the original image

@@ -7,9 +7,12 @@
       Made for Linux video Devices.
       Computes x and y velocity using optical flow and distance to ground (using sonar).
     </description>
+
+    <!--
     <configure name="BEBOP_FRONT_CAMERA_HOST" value="192.168.1.255" description="GCS IP (default: MODEM_HOST)"/>
     <configure name="BEBOP_FRONT_CAMERA_PORT_OUT" value="5000" description="Port (default: 5000)"/>
     <configure name="BEBOP_FRONT_CAMERA_BROADCAST" value="FALSE|TRUE" description="Enable broadcast of image stream (default: TRUE)"/>
+    -->
 
     <!-- Optical flow calculation parameters -->
     <section name="OPTICFLOW" prefix="OPTICFLOW_">
@@ -19,7 +22,7 @@
       <define name="DEVICE" value="/dev/video1" description="The V4L2 camera device that is used for the calculations"/>
       <define name="DEVICE_SIZE" value="1408,2112" description="The V4L2 camera device width and height"/>
       <define name="DEVICE_BUFFERS" value="10" description="Amount of V4L2 video buffers"/>
-      <define name="SUBDEV" value="TRUE" description="The V4L2 subdevice to initialize before the main device USED FOR RTP"/>
+      <define name="SUBDEV" description="The V4L2 subdevice to initialize before the main device"/>
 
       <!-- Camera parameters -->
       <define name="FOV_W" value="0.89360857702" description="The field of view width of the bottom camera (Defaults are from an ARDrone 2)"/>
@@ -30,10 +33,10 @@
       <define name="PROCESS_SIZE" value="272,272" description="Image size to process through opticflow width,height" />
       <!-- Lucas Kanade optical flow calculation parameters -->
       <define name="MAX_TRACK_CORNERS" value="25" description="The maximum amount of corners the Lucas Kanade algorithm is tracking between two frames"/>
-      <define name="WINDOW_SIZE" value="10" description="Window size used in Lucas Kanade algorithm"/>
-      <define name="SUBPIXEL_FACTOR" value="10" description="Amount of subpixels per pixel, used for more precise (subpixel) calculations of the flow"/>
-      <define name="MAX_ITERATIONS" value="10" description="Maximum number of iterations the Lucas Kanade algorithm should take"/>
-      <define name="THRESHOLD_VEC" value="2" description="TThreshold in subpixels when the iterations of Lucas Kanade should stop"/>
+      <define name="WINDOW_SIZE" value="270" description="Window size used in Lucas Kanade algorithm"/>
+      <define name="SUBPIXEL_FACTOR" value="2" description="Amount of subpixels per pixel, used for more precise (subpixel) calculations of the flow"/>
+      <define name="MAX_ITERATIONS" value="8" description="Maximum number of iterations the Lucas Kanade algorithm should take"/>
+      <define name="THRESHOLD_VEC" value="4" description="TThreshold in subpixels when the iterations of Lucas Kanade should stop"/>
 
       <!-- FAST9 corner detection parameters -->
       <define name="FAST9_ADAPTIVE" value="TRUE" description="Whether we should use and adapative FAST9 crner detection threshold"/>
@@ -42,33 +45,33 @@
     </section>
     <section name="DEBUGGER">
       <define name="PERIODIC_TELEMETRY" value="TRUE" description="Send periodic telemetry of opticflow calculations" />
-      <define name="OPTICFLOW_DEBUG" value="TRUE" description="Visualise optical flow on video stream over RTP" />
-      <define name="OPTICFLOW_SHOW_CORNERS" value="TRUE" description="Show optical flow corners "/>
+      <define name="OPTICFLOW_DEBUG" value="FALSE" description="Visualise optical flow on video stream over RTP" />
+      <define name="OPTICFLOW_SHOW_CORNERS" value="FALSE" description="Show optical flow corners "/>
       <define name="OPTICFLOW_SHOW_FLOW" value="FALSE" description="Show optical flow" />
     </section>
     
   </doc>
 
   <settings>
-	<dl_settings NAME="Vision stabilization">
+  <dl_settings NAME="Vision stabilization">
 
       <!-- Optical flow calculations parameters for Lucas Kanade and FAST9 -->
       <dl_settings name="vision_calc">
-        <dl_setting var="opticflow.max_track_corners" module="computer_vision/opticflow_module" min="0" step="1" max="500" shortname="max_trck_corners" param="OPTICFLOW_MAX_TRACK_CORNERS"/>
-        <dl_setting var="opticflow.window_size" module="computer_vision/opticflow_module" min="0" step="1" max="500" shortname="window_size" param="OPTICFLOW_WINDOW_SIZE"/>
-        <dl_setting var="opticflow.subpixel_factor" module="computer_vision/opticflow_module" min="0" step="1" max="100" shortname="subpixel_factor" param="OPTICFLOW_SUBPIXEL_FACTOR"/>
-        <dl_setting var="opticflow.max_iterations" module="computer_vision/opticflow_module" min="0" step="1" max="100" shortname="max_iterations" param="OPTICFLOW_MAX_ITERATIONS"/>
-        <dl_setting var="opticflow.threshold_vec" module="computer_vision/opticflow_module" min="0" step="1" max="100" shortname="threshold_vec" param="OPTICFLOW_THRESHOLD_VEC"/>
+        <dl_setting var="opticflow.max_track_corners" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="500" shortname="max_trck_corners" param="OPTICFLOW_MAX_TRACK_CORNERS"/>
+        <dl_setting var="opticflow.window_size" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="500" shortname="window_size" param="OPTICFLOW_WINDOW_SIZE"/>
+        <dl_setting var="opticflow.subpixel_factor" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="100" shortname="subpixel_factor" param="OPTICFLOW_SUBPIXEL_FACTOR"/>
+        <dl_setting var="opticflow.max_iterations" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="100" shortname="max_iterations" param="OPTICFLOW_MAX_ITERATIONS"/>
+        <dl_setting var="opticflow.threshold_vec" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="100" shortname="threshold_vec" param="OPTICFLOW_THRESHOLD_VEC"/>
 
-        <dl_setting var="opticflow.fast9_adaptive" module="computer_vision/opticflow_module" min="0" step="1" max="1" values="TRUE|FALSE" shortname="fast9_adaptive" param="OPTICFLOW_FAST9_ADAPTIVE"/>
-        <dl_setting var="opticflow.fast9_threshold" module="computer_vision/opticflow_module" min="0" step="1" max="255" shortname="fast9_threshold" param="OPTICFLOW_FAST9_THRESHOLD"/>
-        <dl_setting var="opticflow.fast9_min_distance" module="computer_vision/opticflow_module" min="0" step="1" max="500" shortname="fast9_min_distance" param="OPTICFLOW_FAST9_MIN_DISTANCE"/>
+        <dl_setting var="opticflow.fast9_adaptive" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="1" values="TRUE|FALSE" shortname="fast9_adaptive" param="OPTICFLOW_FAST9_ADAPTIVE"/>
+        <dl_setting var="opticflow.fast9_threshold" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="255" shortname="fast9_threshold" param="OPTICFLOW_FAST9_THRESHOLD"/>
+        <dl_setting var="opticflow.fast9_min_distance" module="computer_vision/mavg4_opticflow_module" min="0" step="1" max="500" shortname="fast9_min_distance" param="OPTICFLOW_FAST9_MIN_DISTANCE"/>
       </dl_settings>
     </dl_settings>
   </settings>
 
   <header>
-    <file name="opticflow_module.h"/>
+    <file name="mavg4_opticflow_module.h"/>
   </header>
 
   <init fun="opticflow_module_init()"/>
@@ -79,14 +82,14 @@
     <define name="modules/computer_vision" type="include"/>
     <file name="image.c" dir="modules/computer_vision/lib/vision"/>
     <file name="jpeg.c" dir="modules/computer_vision/lib/encoding"/>
-    <file name="rtp.c" dir="modules/computer_vision/lib/encoding"/>
+    <!--file name="rtp.c" dir="modules/computer_vision/lib/encoding"/-->
     <file name="v4l2.c" dir="modules/computer_vision/lib/v4l"/>
 
     <!-- The optical flow module (calculator) -->
-    <file name="opticflow_module.c"/>
-    <file name="opticflow_calculator.c" dir="modules/computer_vision/opticflow"/>
-    <file name="size_divergence.c" dir="modules/computer_vision/opticflow"/>
-    <file name="linear_flow_fit.c" dir="modules/computer_vision/opticflow"/>
+    <file name="mavg4_opticflow_module.c"/>
+    <file name="mavg4_opticflow_calculator.c" dir="modules/computer_vision/opticflow"/>
+    <!--file name="size_divergence.c" dir="modules/computer_vision/opticflow"/-->
+    <!--file name="linear_flow_fit.c" dir="modules/computer_vision/opticflow"/-->
     <file name="pprz_algebra_float.c" dir="math"/>
     <file name="pprz_matrix_decomp_float.c" dir="math"/>
 
@@ -94,6 +97,7 @@
     <file name="fast_rosten.c" dir="modules/computer_vision/lib/vision"/>
     <file name="lucas_kanade.c" dir="modules/computer_vision/lib/vision"/>
 
+    <!--
     <define name="__USE_GNU"/>
     <flag name="LDFLAGS" value="lrt"/>
     <flag name="LDFLAGS" value="static-libgcc"/>
@@ -112,7 +116,7 @@
         ap.CFLAGS += $(BEBOPVIEWVID_CFLAGS) -DBEBOP_FRONT_CAMERA_USE_NETCAT
       endif
     </raw>
-
+    -->
   </makefile>
 
 </module>
