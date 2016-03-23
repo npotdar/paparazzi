@@ -20,14 +20,14 @@ float objTurnCommand(void)
 		for (i = n/2 -1 - fov ; i < n/2 + fov; i++){
 			if (depth[i] < threshold && TURN == 0){
 				if (i < n/2) {
-				TURN = 3;  //+1 turn right
+				TURN = 15;  //+1 turn right
 				}
 				else if (i >= n/2){
-				TURN = -3; //-1 turn left
+				TURN = -15; //-1 turn left
 				}
 			}
 		}
-		update = 0;
+		update = 1;
 	}
 	else{
 		TURN = 0;

@@ -156,7 +156,9 @@ void distToLine(){
 		}
 	}
 	float objcommand = objTurnCommand();
-	float incrhead = objectdet*objectscale;
+
+	float incrhead = objcommand*objectscale;
+	printf("%f, %f\n",objcommand,incrhead);
 	float sin_incrhead = sinf(incrhead);
 	float cos_incrhead = cosf(incrhead);
 	float xprime = incrx*cos_incrhead - incry*sin_incrhead;
