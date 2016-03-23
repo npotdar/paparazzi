@@ -33,6 +33,7 @@
 /* ### Defaults defined for bebop ###*/
 #define OPTICFLOW_DEVICE /dev/video1				// Path to video device
 #define OPTICFLOW_DEVICE_SIZE 1408,2112				// (int) width [px], (int) height [px] | Video device resolution
+#define OPTICFLOW_SUBDEV FALSE						// (boolean) | Use SUBDEV video device
 
 /* Video device buffers */
 #define OPTICFLOW_DEVICE_BUFFERS 15					// (int) | Video device V4L2 buffers default: 15
@@ -125,6 +126,14 @@ void opticflow_module_init(void){
 	opticflow_got_result = FALSE;
 
 	/* Initialise video device settings */
+	// Initialise the subdev video device
+	if(OPTICFLOW_SUBDEV){
+		if (!v4l2_init_subdev("/dev/v4l-subdev1", 0, 1, V4L2_MBUS_FMT_SGBRG10_1X10, OPTICFLOW_DEVICE_SIZE)) {
+		      printf("[bebop_front_camera] Could not initialize the v4l-subdev1 subdevice.\n");
+		      return;
+		    }
+	}
+
 	// Initialise the main video device
 	opticflow_dev = v4l2_init("/dev/video1", OPTICFLOW_DEVICE_SIZE, OPTICFLOW_DEVICE_BUFFERS, V4L2_PIX_FMT_SGBRG10);
 
@@ -202,7 +211,7 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 	};
 
 	/* Main loop of the optic flow calculation	 */
-	int counter = 1;
+	//int counter = 1;
 	while(TRUE){
 		/* Define image */
 		struct image_t img;
@@ -244,7 +253,7 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 	  image_free(&img_jpeg);
 	  image_free(&img_color);
 	};
-	counter++;
+	//counter++;
 }
 
 /**
