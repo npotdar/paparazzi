@@ -20,8 +20,9 @@
     <file name="flow_navigation.h"/>
   </header>
   <init fun="flow_navigation_init()"/>
-  <periodic fun="distToLine(3)" freq="4"/>
+  <periodic fun="distToLine()" freq="4"/>
   <makefile>
+  	<file name="object_input.c"/>
     <file name="flow_navigation.c"/>
   </makefile>
 </module>
