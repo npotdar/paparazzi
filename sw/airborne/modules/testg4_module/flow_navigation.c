@@ -1,4 +1,5 @@
 #include "modules/testg4_module/flow_navigation.h"
+#include "object_input.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "subsystems/navigation/waypoints.h"
 #include "state.h"
@@ -15,6 +16,10 @@ float objectscale = -0.01745;
 float objectdet = 0;
 float Vx = 0;
 float Vy = 1;
+float yxratio = 1;
+uint8_t wp_target;
+uint8_t wp_heading;
+
 struct Line{
 	float a;
 	float b;
@@ -24,9 +29,9 @@ struct Line{
 
 struct Line lines[4];
 
-float objTurnCommand(void){
-	return objectdet;
-}
+//float objTurnCommand(void){
+//	return objectdet;
+//}
 
 struct Line constructLine(uint8_t wp_1,uint8_t wp_2){
 	struct Line line;
@@ -34,11 +39,9 @@ struct Line constructLine(uint8_t wp_1,uint8_t wp_2){
 	float p1y = waypoint_get_y(wp_1);
 	float p2x = waypoint_get_x(wp_2);
 	float p2y = waypoint_get_y(wp_2);
-	//printf("p1x,p1y,p2x,p2y are %f,%f,%f,%f\n",p1x,p1y,p2x,p2y);
 	line.a = p1y-p2y;
 	line.b = p2x-p1x;
 	line.c = p1x*p2y - p2x*p1y;
-	//printf("a,b,c are %f,%f,%f\n",line.a,line.b,line.c);
 	return line;
 }
 
@@ -46,6 +49,8 @@ void flow_navigation_init() {
 	incrementForAvoidance = 360;
 	safeToGoForwards = TRUE;
 }
+
+
 
 float absol(float in){
 	if (in>0){
@@ -80,10 +85,7 @@ uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
   return FALSE;
 }
 
-//uint8_t testfun(uint8_t wp_id){
-//	printf("WP ID is %u, x is %f\n",wp_id,waypoint_get_x(wp_id));
-//	return FALSE;
-//}
+
 
 uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	  struct EnuCoor_i new_coor;
@@ -124,7 +126,7 @@ uint8_t chooseRandomIncrementAvoidance(){
 /**
  * Compute the distance between yourself (coordinates xself,yself) and a line given by y=ax+b
  */
-void distToLine(uint8_t wp_target){
+void distToLine(){
 	/*
 	struct EnuCoor_f *speed = stateGetSpeedEnu_f();
 	printf("speed x,y,z = %f,%f,%f\n",speed->x,speed->y,speed->z);
@@ -141,7 +143,6 @@ void distToLine(uint8_t wp_target){
 		float b = lines[i].b;
 		float c = lines[i].c;
 		float distance = absol(a*xself+b*yself+c)/sqrt(a*a+b*b);
-		//printf("i is: %i distance is: %f\n",i,distance);
 		float closestx = (b*(b*xself-a*yself)-a*c)/(a*a+b*b);
 		float closesty = (a*(-b*xself+a*yself)-b*c)/(a*a+b*b);
 		float xinc = xself-closestx;
@@ -149,46 +150,49 @@ void distToLine(uint8_t wp_target){
 		float norm = sqrt((xinc*xinc+yinc*yinc));
 		xinc = xinc/norm;
 		yinc = yinc/norm;
-		//printf("i is: %i, xinc is: %f, yinc is: %f\n",i,xinc,yinc);
-		//float testx = incrx + slow*xinc*(1/(distance));
-		//float testy = incry + slow*yinc*(1/(distance));
-		//float mag = sqrt(testx*testx+testy*testy);
 		if(distance<distthresh ){
 			incrx = incrx + wallscale*xinc*(1/(pow(distance,1.6)));
 			incry = incry + wallscale*yinc*(1/(pow(distance,1.6)));
 		}
 	}
-	//printf("nav_heading is: %f \n",ANGLE_FLOAT_OF_BFP(nav_heading));
-	float incrhead = objTurnCommand()*objectscale;
+	float objcommand = objTurnCommand();
+	float incrhead = objectdet*objectscale;
 	float sin_incrhead = sinf(incrhead);
 	float cos_incrhead = cosf(incrhead);
-	//printf("incrx, incry before is: %f,%f\n",incrx,incry);
 	float xprime = incrx*cos_incrhead - incry*sin_incrhead;
 	float yprime = incrx*sin_incrhead + incry*cos_incrhead;
 	incrx = xprime;
 	incry = yprime;
-	//printf("incrx, incry after is: %f,%f\n",incrx,incry);
-	float wayx = waypoint_get_x(wp_target);
-	float wayy = waypoint_get_y(wp_target);
-	incrx = capFun(incrx,0.5,-0.5);
-	incry = capFun(incry,0.5,-0.5);
-	//printf("wayx,wayy is: %f,%f\n",wayx,wayy);
-	wayx = xself+incrx;
-	wayy = yself+incry;
-	printf("INC: %f, %f, %f, %f, %f, %f\n",incrx,incry,xself,yself,wayx,wayy);
-	printf("1: %f\n ", (ANGLE_FLOAT_OF_BFP(nav_heading)*-1)/objectscale);
+	yxratio = incry/incrx;
+	float incrheadx = incrx*10;
+	float incrheady = incry*10;
+	//printf("incrheadx,incrheady is: %f,%f\n",incrheadx,incrheady);
+	float wayheadx = xself + incrheadx;
+	float wayheady =yself + incrheady;
+	waypoint_set_xy_i(wp_heading,POS_BFP_OF_REAL(wayheadx),POS_BFP_OF_REAL(wayheady));
+	if(absol(incrx)>absol(incry)){
+		incrx = capFun(incrx,0.5,-0.5);
+		incry = incrx*yxratio;
+	}
+	else{
+		incry = capFun(incry,0.5,-0.5);
+		incrx = incry/yxratio;
+	}
+	//printf("incrx,incry is: %f,%f\n",incrx,incry);
+	float wayx = xself+incrx;
+	float wayy = yself+incry;
+
 	waypoint_set_xy_i(wp_target,POS_BFP_OF_REAL(wayx),POS_BFP_OF_REAL(wayy));
-	bool_t temp = nav_set_heading_towards_waypoint(4);
-	//printf("incrx2 is: %f, incry2 is: %f\n",incrx,incry);
-	//return FALSE;
-	printf("2: %f\n ", (ANGLE_FLOAT_OF_BFP(nav_heading)*-1)/objectscale);
+	bool_t temp = nav_set_heading_towards_waypoint(wp_heading);
 }
 
-uint8_t initialiseLines(uint8_t wp_1, uint8_t wp_2,uint8_t wp_3, uint8_t wp_4){
+uint8_t initialiseLines(uint8_t wp_1, uint8_t wp_2,uint8_t wp_3, uint8_t wp_4,uint8_t wp_targetfun, uint8_t wp_headingfun){
 	lines[0]=constructLine(wp_1,wp_2);
 	lines[1] = constructLine(wp_2,wp_3);
 	lines[2] = constructLine(wp_3,wp_4);
 	lines[3] = constructLine(wp_4,wp_1);
+	wp_target = wp_targetfun;
+	wp_heading = wp_headingfun;
 	return FALSE;
 }
 
