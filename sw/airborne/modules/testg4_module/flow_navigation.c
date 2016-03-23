@@ -175,10 +175,13 @@ void distToLine(uint8_t wp_target){
 	//printf("wayx,wayy is: %f,%f\n",wayx,wayy);
 	wayx = xself+incrx;
 	wayy = yself+incry;
+	printf("INC: %f, %f, %f, %f, %f, %f\n",incrx,incry,xself,yself,wayx,wayy);
+	printf("1: %f\n ", (ANGLE_FLOAT_OF_BFP(nav_heading)*-1)/objectscale);
 	waypoint_set_xy_i(wp_target,POS_BFP_OF_REAL(wayx),POS_BFP_OF_REAL(wayy));
-	bool_t temp = nav_set_heading_towards_waypoint(wp_target);
+	bool_t temp = nav_set_heading_towards_waypoint(4);
 	//printf("incrx2 is: %f, incry2 is: %f\n",incrx,incry);
 	//return FALSE;
+	printf("2: %f\n ", (ANGLE_FLOAT_OF_BFP(nav_heading)*-1)/objectscale);
 }
 
 uint8_t initialiseLines(uint8_t wp_1, uint8_t wp_2,uint8_t wp_3, uint8_t wp_4){

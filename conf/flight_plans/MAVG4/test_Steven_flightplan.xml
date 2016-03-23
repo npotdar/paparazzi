@@ -67,6 +67,10 @@
       <call fun="NavSetWaypointHere(WP_CLIMB)"/>
       <stay climb="nav_climb_vspeed" vmode="climb" wp="CLIMB"/>
     </block>
+    <block name="stay_home">
+      <!--call fun="NavSetWaypointHere(WP_HOME)"/>-->
+      <stay wp="HOME"/>
+    </block>
     <block key="s" name="Standby" strip_button="Standby" strip_icon="home.png">
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <stay wp="STDBY"/>
@@ -80,28 +84,6 @@
       <!--exception cond="!safeToGoForwards" deroute="ChangeHeading"/>
       <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
     </block>
-    <block name="MoveGoalForward">
-      <call fun="increase_nav_heading(&nav_heading, incrementForAvoidance)"/>
-      <call fun="moveWaypointForwards(WP_GOAL,0.5)"/>
-      <deroute block="StayGoal"/>
-      <!--exception cond="!safeToGoForwards" deroute="ChangeHeading"/>
-      <exception cond="!InsideObstacleZone(WaypointX(WP_GOAL),WaypointY(WP_GOAL))" deroute="PrepareObstacleRun"/>-->
-    </block>
-    <block name="ChangeHeading">
-      <call fun="NavSetWaypointHere(WP_STDBY)"/>
-      <while cond="1">
-        <call fun="increase_nav_heading(&nav_heading, incrementForAvoidance)"/>
-        <call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
-        <go wp="STDBY"/>
-      </while>
-      <!--exception cond="safeToGoForwards" deroute="StayGoal"/>-->
-    </block>
-    <block name="PrepareObstacleRun">
-      <call fun="NavSetWaypointHere(WP_STDBY)"/>
-      <call fun="nav_set_heading_towards_waypoint(WP_HOME)"/>
-      <stay wp="STDBY"/>
-      <exception cond="block_time > 1" deroute="GetOutOfObstacleZone"/>
-    </block>
     <block name="testblock">
     	<call fun="NavSetWaypointHere(WP_STDBY)"/>
     	<call fun="nav_set_heading_towards_waypoint(WP_HOME)"/>
@@ -114,17 +96,6 @@
     	<stay wp="GOAL"/>
     	</while>
     	<!--stay wp="GOAL"/>-->
-    </block>
-    <block name="auto_distance_test">
-    	<call fun="distToLine(WP_GOAL)"/>
-    	<go wp="GOAL"/>
-    	<deroute block="auto_distance_test"/>		
-	</block>
-    <block name="GetOutOfObstacleZone">
-      <call fun="moveWaypointForwards(WP_GOAL,0.5)"/>
-      <call fun="chooseRandomIncrementAvoidance()"/>
-      <stay wp="GOAL"/>
-      <exception cond="block_time > 1" deroute="START"/>
     </block>
     <block key="l" name="Land here" strip_button="Land Here" strip_icon="land-right.png">
       <call fun="NavSetWaypointHere(WP_TD)"/>

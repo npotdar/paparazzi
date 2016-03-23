@@ -73,8 +73,8 @@
       <exception cond="block_time > 5" deroute="ChangeHeading"/>
     </block>
     <block name="ChangeHeading">
-      <call fun="increase_nav_heading(&nav_heading, 45, FALSE)"/>
-      <exception cond="block_time > 5" deroute="MoveGoalForward"/>
+      <call fun="increase_nav_heading(&nav_heading, 90, FALSE)"/>
+      <exception cond="block_time > 5" deroute="Standby"/>
     </block>
     <block name="MoveGoalForward">
       <call fun="MoveRelative(WP_GOAL,1)"/>

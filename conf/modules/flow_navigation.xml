@@ -20,7 +20,7 @@
     <file name="flow_navigation.h"/>
   </header>
   <init fun="flow_navigation_init()"/>
-  <periodic fun="distToLine(3)" freq="10"/>
+  <periodic fun="distToLine(3)" freq="4"/>
   <makefile>
     <file name="flow_navigation.c"/>
   </makefile>

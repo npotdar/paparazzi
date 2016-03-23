@@ -348,7 +348,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	/* Next loop preperations */
 	free(corners);
 	free(vectors);
-	image_switch(&opticflow->img_gray, &opticflow->prev_img_gray);
+	image_switch(&opticflowin->img_gray, &opticflowin->prev_img_gray);
 }
 
 
