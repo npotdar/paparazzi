@@ -309,7 +309,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		magnitude_root = sqrtf(magnitude_squared);
 			for (n=1; n<=no_segments; n++)
 				{
-					if (vectors[i].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR <(n*segment_size))
+					if (vectors[i].pos.x<(n*segment_size))
 					{
 						segmented_array[n] += (1/magnitude_root);
 					}
