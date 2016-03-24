@@ -302,6 +302,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 	int no_segments=5;
 	int segment_size=(272 - 2*PAD_SORT)/no_segments;
+	float magnitude_array[no_segments];
 	double segmented_array[no_segments];
 
 	for (iter=0; iter<result->tracked_cnt; iter++)
@@ -310,13 +311,17 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		magnitude_root = sqrtf(magnitude_squared);
 			for (n=0; n<no_segments; n++)
 				{
-					if ((vectors[iter].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR)<(((n+1)*segment_size) + PAD_SORT) && (vectors[iter].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR)>(((n)*segment_size) + PAD_SORT))
+					if ( ( (vectors[iter].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR)<(((n+1)*segment_size) + PAD_SORT) ) && ( (vectors[iter].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR)>(((n)*segment_size) + PAD_SORT) ) )
 					{
-						segmented_array[n] += (1/magnitude_root);
+						magnitude_array[n] += magnitude_root;
 					}
 
 				}
 		}
+	for (iter=0; iter<no_segments; iter++)
+	{
+		segmented_array[n]=1/magnitude_array[n];
+	}
 
 		for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
 				{
