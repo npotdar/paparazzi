@@ -20,6 +20,9 @@
 #include "lib/encoding/rtp.h"
 #include "udp_socket.h"
 
+// include board for bottom_camera and front_camera on ARDrone2 and Bebop
+//#include BOARD_CONFIG
+
 /* ### Defaults defined for opticalflow SEE .H FILE!!! ###*/
 #define OPTICFLOW_MAX_TRACK_CORNERS 25
 #define OPTICFLOW_WINDOW_SIZE 40
@@ -35,18 +38,18 @@
 #define OPTICFLOW_DEVICE_SIZE 1408,2112				// (int) width [px], (int) height [px] | Video device resolution
 
 /* Video device buffers */
-#define OPTICFLOW_DEVICE_BUFFERS 15					// (int) | Video device V4L2 buffers default: 15
+#define OPTICFLOW_DEVICE_BUFFERS 6					// (int) | Video device V4L2 buffers default: 15
 
 /* Optical flow variables */
-#define OPTICFLOW_PADDING 0,0 				// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
-#define OPTICFLOW_PROCESS_SIZE 544,544			// (int) width [px], (int) height [px] | Processed image size
-#define OPTICFLOW_SORT 544
+#define OPTICFLOW_PADDING 20,20 				// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
+#define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 544, 544
+#define OPTICFLOW_SORT 272
 
 /* Debugging */
 #define PERIODIC_TELEMETRY TRUE
 #define OPTICFLOW_DEBUG TRUE
+#define VIDEO_SIZE 272,272				// 272,272
 #define VIDEO_THREAD_SHOT_PATH "/data/ftp/internal_000/images"
-#define VIDEO_SIZE 272,272
 
 /* ### Storage variables ### */
 #if OPTICFLOW_DEBUG
@@ -69,6 +72,7 @@ static pthread_mutex_t opticflow_mutex;            	// Mutex lock for thread saf
 /* ### Functions ### */
 //static void opticflow_module_run(void); 				// Dummy function
 static void *opticflow_module_calc(void *data);		// Main optical flow calculation thread
+static int sort_on_x(const void *a, const void *b);
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime);		// Calculation of timedifference for FPS
 static int cmp_flow(const void *a, const void *b);
 static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number);
@@ -91,6 +95,7 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
   pthread_mutex_unlock(&opticflow_mutex);
 }
 #endif
+
 
 /************************************************************
  * INITIALISE OPTICAL FLOW
@@ -122,7 +127,7 @@ void opticflow_module_init(void){
 	opticflowp->fast9_threshold = OPTICFLOW_FAST9_THRESHOLD;
 	opticflowp->fast9_min_distance = OPTICFLOW_FAST9_MIN_DISTANCE;
 
-	opticflow_got_result = FALSE;
+	//opticflow_got_result = FALSE;
 
 	/* Initialise video device settings */
 	// Initialise the main video device
@@ -133,41 +138,7 @@ void opticflow_module_init(void){
 	#endif
 }
 
-/****************************************************************
- * MODULE START STOP CONTROL
- ****************************************************************/
 
-/**
- * Start the optical flow calculation
- */
-void opticflow_module_start(void){
-	// Check if we are not already running
-	if (opticflow_calc_thread != 0) {
-	    printf("[opticflow_module] Opticflow already started!\n");
-	    return;
-	  }
-
-	  // Create the opticalflow calculation thread
-	  int rc = pthread_create(&opticflow_calc_thread, NULL, opticflow_module_calc, NULL);
-	  if (rc) {
-	    printf("[opticflow_module] Could not initialize opticflow thread (return code: %d)\n", rc);
-	  }
-}
-
-
-/**
- * Stop the optical flow calculation
- */
-void opticflow_module_stop(void)
-{
-  // Stop the capturing
-  v4l2_stop_capture(opticflow_dev);
-
-  // Cancel the opticalflow calculation thread
-  if(pthread_cancel(opticflow_calc_thread)!=0){
-	  printf("Thread killing did not work\n");
-  }
-}
 
 
 /****************************************************************
@@ -190,17 +161,16 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 	  }
 
 	// Create the images for streaming purposes only!
-#if OPTICFLOW_DEBUG
+	#if OPTICFLOW_DEBUG
 	struct image_t img_color;
 	image_create(&img_color, VIDEO_SIZE, IMAGE_YUV422);
 	struct image_t img_jpeg;
 	image_create(&img_jpeg, VIDEO_SIZE, IMAGE_JPEG);
-#endif
+	udp_socket_create(&video_sock, STRINGIFY(BEBOP_FRONT_CAMERA_HOST), 5000, -1, TRUE);
+	#endif
 
-	if(OPTICFLOW_DEBUG){
-	  udp_socket_create(&video_sock, STRINGIFY(BEBOP_FRONT_CAMERA_HOST), 5000, -1, TRUE);
-	};
-
+	//struct image_t img_down;
+	//image_create(&img_down, VIDEO_SIZE, IMAGE_YUV422);
 	/* Main loop of the optic flow calculation	 */
 	int counter = 1;
 	while(TRUE){
@@ -209,6 +179,7 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 
 		// Get image from v4l2 with native size
 		v4l2_image_get(opticflow_dev, &img);
+		//printf("%d, %d\n",img.w, img.h);
 
 		/* Do optical flow calculations */
 		//Calculate on frame
@@ -218,13 +189,13 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 		//Copy results to shared result memory
 		pthread_mutex_lock(&opticflow_mutex);
 		memcpy(&opticflow_result, &temp_result, sizeof(struct opticflow_result_t));
-		opticflow_got_result = TRUE;
+		//opticflow_got_result = TRUE;
 		pthread_mutex_unlock(&opticflow_mutex);
 
-		if(OPTICFLOW_DEBUG){
-			//jpeg_encode_image(&img, &img_jpeg, 70, 0);
+		#if OPTICFLOW_DEBUG
 			BayerToYUV(&img, &img_color, 0, 0);
-			//video_thread_save_shot(&img_color, &img_jpeg, counter);
+			//image_copy(&img_ph, &img_color);
+			//video_thread_save_shot(&img_color, $img_jpeg, counter);
 			jpeg_encode_image(&img_color, &img_jpeg, 80, 0);
 			rtp_frame_send(
 			  &video_sock,           // UDP device
@@ -234,17 +205,20 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 			  0,                        // DRI Header
 			  0                         // 90kHz time increment
 			);
-		};
+		#endif
 
 		/* Free image */
 		v4l2_image_free(opticflow_dev, &img);
-	}
 
-	if(OPTICFLOW_DEBUG){
+		counter++;
+	}
+	//image_free(&img_down);
+
+	#if OPTICFLOW_DEBUG
 	  image_free(&img_jpeg);
 	  image_free(&img_color);
-	};
-	counter++;
+	  //image_free(&img_ph);
+	#endif
 }
 
 /**
@@ -260,9 +234,15 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 
 void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 									struct opticflow_result_t *result){
+
+	struct image_t img_scaled;
+	image_create(&img_scaled, OPTICFLOW_PROCESS_SIZE,IMAGE_YUV422);
+	image_copy(&img, &img_scaled);
+
 	// Update FPS for information
 	result->fps = 1/(timeval_diff(&opticflowin->prev_timestamp,&img->ts) / 1000.);
 	memcpy(&opticflowin->prev_timestamp,&img->ts,sizeof(struct timeval));
+
 
 	// Convert image to grayscale uses PROCESS_SIZE
 	image_to_grayscale(img, &opticflowin->img_gray);
@@ -275,7 +255,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 	/* Corner detection */
 	// FAST corner detection
-	struct point_t *corners = fast9_detect(img, opticflowin->fast9_threshold, opticflowin->fast9_min_distance,
+	struct point_t *corners = fast9_detect(&img_scaled, opticflowin->fast9_threshold, opticflowin->fast9_min_distance,
 											OPTICFLOW_PADDING, &result->corner_cnt);
 
 	// FAST Adaptive threshold
@@ -311,6 +291,9 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	/* Do something with the flow EDIT HERE*/
 	// Get the median flow
 	//qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), cmp_flow);
+
+	qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
+
 	if (result->tracked_cnt == 0) {
 	// We got no flow
 	result->flow_x = 0;
@@ -350,6 +333,46 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 }
 
 
+
+
+/****************************************************************
+ * MODULE START STOP CONTROL
+ ****************************************************************/
+
+/**
+ * Start the optical flow calculation
+ */
+void opticflow_module_start(void){
+	// Check if we are not already running
+	if (opticflow_calc_thread != 0) {
+	    printf("[opticflow_module] Opticflow already started!\n");
+	    return;
+	  }
+
+	  // Create the opticalflow calculation thread
+	  int rc = pthread_create(&opticflow_calc_thread, NULL, opticflow_module_calc, NULL);
+	  if (rc) {
+	    printf("[opticflow_module] Could not initialize opticflow thread (return code: %d)\n", rc);
+	  }
+}
+
+
+/**
+ * Stop the optical flow calculation
+ */
+void opticflow_module_stop(void)
+{
+  // Stop the capturing
+  v4l2_stop_capture(opticflow_dev);
+
+  // Cancel the opticalflow calculation thread
+  if(pthread_cancel(opticflow_calc_thread)!=0){
+	  printf("Thread killing did not work\n");
+  }
+}
+
+
+
 /****************************************************************
  * EXTRA FUNCTIONS
  ****************************************************************/
@@ -360,6 +383,14 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
  * @param[in] *finishtime The finish time to calculate the difference from
  * @return The difference in milliseconds
  */
+
+static int sort_on_x(const void *a, const void *b)
+{
+	const struct flow_t *a_p = (const struct flow_t *)a;
+	const struct flow_t *b_p = (const struct flow_t *)b;
+	return (a_p->pos.x ) - (b_p->pos.x) ;
+}
+
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime)
 {
   uint32_t msec;

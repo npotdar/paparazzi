@@ -27,7 +27,7 @@ float objTurnCommand(void)
 				}
 			}
 		}
-		update = 1;
+		update = 0;
 	}
 	else{
 		TURN = 0;
