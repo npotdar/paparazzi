@@ -65,15 +65,13 @@ uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	  // Calculate the sine and cosine of the heading the drone is keeping
 	  float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
 	  float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
-	  printf("heading is is: %ld, sin = %f, cos = %f\n",nav_heading,sin_heading,cos_heading);
-	  printf("distanceMeters = %f, x+ = %f, y+ = %f\n", distanceMeters,POS_BFP_OF_REAL(sin_heading * (distanceMeters)),POS_BFP_OF_REAL(cos_heading * (distanceMeters)));
+
 
 	  // Now determine where to place the waypoint you want to go to
 	  new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
 	  new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
 	  new_coor.z = pos->z; // Keep the height the same
-	  printf("x is: %ld\n",new_coor.x);
-	  printf("y is: %ld\n",new_coor.y);
+	  printf("coor x,y after: %f,%f\n",new_coor.x,new_coor.y);
 
 	  // Set the waypoint to the calculated position
 	  waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);

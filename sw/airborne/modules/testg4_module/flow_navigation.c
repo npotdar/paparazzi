@@ -10,13 +10,14 @@ int32_t incrementForAvoidance;
 uint8_t safeToGoForwards;
 float incrx = 0.0;
 float incry = 0.8;
-float distthresh = 1.6;
-float wallscale = 0.3;
+float distthresh = 1;
+float wallscale = 10;
 float objectscale = -0.01745;
 float objectdet = 0;
 float Vx = 0;
 float Vy = 1;
 float yxratio = 1;
+float mindistance=10;
 uint8_t wp_target;
 uint8_t wp_heading;
 
@@ -88,25 +89,30 @@ uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
 
 
 uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
-	  struct EnuCoor_i new_coor;
-	  struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
+	struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
+	struct EnuCoor_i new_coor;
+	//struct EnuCoor_i *pos = stateGetPositionEnu_i(); // Get your current position
+	//printf("%f,%f\n",pos->x,pos->y);
 
-	  // Calculate the sine and cosine of the heading the drone is keeping
-	  float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
-	  float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
-	  printf("heading is is: %ld, sin = %f, cos = %f\n",nav_heading,sin_heading,cos_heading);
-	  printf("distanceMeters = %f, x+ = %f, y+ = %f\n", distanceMeters,POS_BFP_OF_REAL(sin_heading * (distanceMeters)),POS_BFP_OF_REAL(cos_heading * (distanceMeters)));
+	// Calculate the sine and cosine of the heading the drone is keeping
+	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
+	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
+	//printf("sin,cos %f,%f\n",sin_heading,cos_heading);
 
+	  //printf("heading is is: %ld, sin = %f, cos = %f\n",nav_heading,sin_heading,cos_heading);
+	  //printf("distanceMeters = %f, x+ = %f, y+ = %f\n", distanceMeters,POS_BFP_OF_REAL(sin_heading * (distanceMeters)),POS_BFP_OF_REAL(cos_heading * (distanceMeters)));
+	//printf("coor x,y before: %f,%f\n",pos->x,pos->y);
 	  // Now determine where to place the waypoint you want to go to
-	  new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
-	  new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
-	  new_coor.z = pos->z; // Keep the height the same
-	  printf("x is: %ld\n",new_coor.x);
-	  printf("y is: %ld\n",new_coor.y);
+	new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading * (distanceMeters));
+	new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading * (distanceMeters));
+	new_coor.z = pos->z; // Keep the height the same
+	//printf("new x,y %i,%i\n",new_coor.x,new_coor.y);
+	  //printf("x is: %ld\n",new_coor.x);
+	  //printf("y is: %ld\n",new_coor.y);
 	  // Set the waypoint to the calculated position
-	  waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);
-
-	  return FALSE;
+	//printf("coor x,y after: %f,%f\n",new_coor.x,new_coor.y);
+	waypoint_set_xy_i(waypoint, new_coor.x, new_coor.y);
+	return FALSE;
 }
 
 uint8_t chooseRandomIncrementAvoidance(){
@@ -121,20 +127,40 @@ uint8_t chooseRandomIncrementAvoidance(){
 	return FALSE;
 }
 
+void checkDistance(){
+	struct EnuCoor_f *pos = stateGetPositionEnu_f(); // Get your current position
+	float xself = pos->x;
+	float yself = pos->y;
+	for(int i=0;i<4;i = i+1){
+		float a = lines[i].a;
+		float b = lines[i].b;
+		float c = lines[i].c;
+		float distance = absol(a*xself+b*yself+c)/sqrt(a*a+b*b);
+		if(i==0){
+			mindistance = distance;
+		}
+		if(distance<mindistance){
+			mindistance = distance;
+		}
+	}
+	//printf("mindistance %f\n",mindistance);
+}
+
 
 
 /**
  * Compute the distance between yourself (coordinates xself,yself) and a line given by y=ax+b
  */
-void distToLine(){
-	/*
-	struct EnuCoor_f *speed = stateGetSpeedEnu_f();
-	printf("speed x,y,z = %f,%f,%f\n",speed->x,speed->y,speed->z);
-	speed->y=1;
-	printf("speed x2,y2,z2 = %f,%f,%f\n",speed->x,speed->y,speed->z);
-	stateSetSpeedEnu_f(speed);
-	printf("speed x3,y3,z3 = %f,%f,%f\n",speed->x,speed->y,speed->z);
-	*/
+
+uint8_t distToLine(){
+
+	//struct EnuCoor_f *speed = stateGetSpeedEnu_f();
+	//printf("speed x,y,z = %f,%f,%f\n",speed->x,speed->y,speed->z);
+	//speed->y=1;
+	//printf("speed x2,y2,z2 = %f,%f,%f\n",speed->x,speed->y,speed->z);
+	//stateSetSpeedEnu_f(speed);
+	//printf("speed x3,y3,z3 = %f,%f,%f\n",speed->x,speed->y,speed->z);
+
 	struct EnuCoor_f *pos = stateGetPositionEnu_f(); // Get your current position
 	float xself = (float)pos->x;
 	float yself = (float)pos->y;
@@ -143,18 +169,26 @@ void distToLine(){
 		float b = lines[i].b;
 		float c = lines[i].c;
 		float distance = absol(a*xself+b*yself+c)/sqrt(a*a+b*b);
-		if(distance<distthresh ){
+		if(i==0){
+			mindistance = distance;
+		}
+		if(distance<mindistance){
+			mindistance = distance;
+		}
+		if(distance<distthresh*1.5 ){
 			float closestx = (b*(b*xself-a*yself)-a*c)/(a*a+b*b);
 			float closesty = (a*(-b*xself+a*yself)-b*c)/(a*a+b*b);
 			float xinc = xself-closestx;
 			float yinc = yself-closesty;
+			//printf("xinc,yinc is: %f,%f\n",xinc,yinc);
 			float norm = sqrt((xinc*xinc+yinc*yinc));
 			xinc = xinc/norm;
 			yinc = yinc/norm;
-			printf("wall i %i, distance %f\n",i,distance);
-			incrx = incrx + wallscale*xinc*(1/(pow(distance,4)));
-			incry = incry + wallscale*yinc*(1/(pow(distance,4)));
+			//printf("wall i %i, distance %f\n",i,distance);
+			incrx = incrx + wallscale*xinc;
+			incry = incry + wallscale*yinc;
 		}
+
 	}
 	//float objcommand = objTurnCommand();
 	float objcommand = objectdet;
@@ -167,12 +201,9 @@ void distToLine(){
 	incrx = xprime;
 	incry = yprime;
 	yxratio = incry/incrx;
-	float incrheadx = incrx*10;
-	float incrheady = incry*10;
-	//printf("incrheadx,incrheady is: %f,%f\n",incrheadx,incrheady);
-	float wayheadx = xself + incrheadx;
-	float wayheady =yself + incrheady;
-	waypoint_set_xy_i(wp_heading,POS_BFP_OF_REAL(wayheadx),POS_BFP_OF_REAL(wayheady));
+
+
+
 	if(absol(incrx)>absol(incry)){
 		incrx = capFun(incrx,1,-1);
 		incry = incrx*yxratio;
@@ -184,9 +215,31 @@ void distToLine(){
 	//printf("incrx,incry is: %f,%f\n",incrx,incry);
 	float wayx = xself+incrx;
 	float wayy = yself+incry;
-	bool_t temp = nav_set_heading_towards_waypoint(wp_heading);
-	waypoint_set_xy_i(wp_target,POS_BFP_OF_REAL(wayx),POS_BFP_OF_REAL(wayy));
 
+	float incrheadx = incrx*10;
+	float incrheady = incry*10;
+	float wayheadx = xself + incrheadx;
+	float wayheady =yself + incrheady;
+	waypoint_set_xy_i(wp_heading,POS_BFP_OF_REAL(wayheadx),POS_BFP_OF_REAL(wayheady));
+
+
+	//printf("incrx,incry is: %f,%f\n",incrx,incry);
+	//printf("incrheadx,incrheady is: %f,%f\n",incrheadx,incrheady);
+
+	float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
+	float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
+	//printf("headingx, headingy is: %f, %f \n",sin_heading,cos_heading);
+	waypoint_set_xy_i(wp_target,POS_BFP_OF_REAL(wayx),POS_BFP_OF_REAL(wayy));
+	//bool_t temp = nav_set_heading_towards_waypoint(ANGLE_FLOAT_OF_BFP(wp_heading));
+	//printf("heading is: %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/-objectscale);
+	bool_t temp = nav_set_heading_towards_waypoint(wp_heading);
+	//printf("heading is: %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/-objectscale);
+	return FALSE;
+}
+
+uint8_t minDistanceExceed(){
+	printf("mindistance %f\n",mindistance);
+	return mindistance<distthresh;
 }
 
 uint8_t initialiseLines(uint8_t wp_1, uint8_t wp_2,uint8_t wp_3, uint8_t wp_4,uint8_t wp_targetfun, uint8_t wp_headingfun){
