@@ -226,6 +226,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflow, struct opticflow_state_
     result->flow_y = vectors[result->tracked_cnt / 2].flow_y;
   }
 
+  qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
+
   // Flow Derotation
   float diff_flow_x = (state->phi - opticflow->prev_phi) * img->w / OPTICFLOW_FOV_W;
   float diff_flow_y = (state->theta - opticflow->prev_theta) * img->h / OPTICFLOW_FOV_H;
@@ -279,4 +281,18 @@ static int cmp_flow(const void *a, const void *b)
          b_p->flow_y);
 }
 
+/**
+ * Compare two positions in x
+ * Used for sorting.
+ * @param[in] *a The first x position (should be vect flow_t)
+ * @param[in] *b The second x position (should be vect flow_t)
+ * @return Negative if b has more flow than a, 0 if the same and positive if a has more flow than b
+ */
+
+static int sort_on_x(const void *a, const void *b)
+{
+	const struct flow_t *a_p = (const struct flow_t *)a;
+	const struct flow_t *b_p = (const struct flow_t *)b;
+	return (a_p->pos.x ) - (b_p->pos.x) ;
+}
 

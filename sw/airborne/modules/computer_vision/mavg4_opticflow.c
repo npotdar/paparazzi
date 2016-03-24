@@ -314,6 +314,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	result->flow_y = vectors[result->tracked_cnt / 2].flow_y;
 	}
 
+	qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
+
 	int iter;
 	//int n;
 	//float AwesomeArray[OPTICFLOW_SORT];
@@ -414,6 +416,12 @@ static int cmp_flow(const void *a, const void *b)
          b_p->flow_y);
 }
 
+static int sort_on_x(const void *a, const void *b)
+{
+	const struct flow_t *a_p = (const struct flow_t *)a;
+	const struct flow_t *b_p = (const struct flow_t *)b;
+	return (a_p->pos.x ) - (b_p->pos.x) ;
+}
 
 static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number)
 {
