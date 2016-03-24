@@ -24,31 +24,31 @@
 //#include BOARD_CONFIG
 
 /* ### Defaults defined for opticalflow SEE .H FILE!!! ###*/
-#define OPTICFLOW_MAX_TRACK_CORNERS 25
-#define OPTICFLOW_WINDOW_SIZE 40
+#define OPTICFLOW_MAX_TRACK_CORNERS 30
+#define OPTICFLOW_WINDOW_SIZE 14
 #define OPTICFLOW_SUBPIXEL_FACTOR 10
 #define OPTICFLOW_MAX_ITERATIONS 10
 #define OPTICFLOW_THRESHOLD_VEC 2
-#define OPTICFLOW_FAST9_ADAPTIVE TRUE
+#define OPTICFLOW_FAST9_ADAPTIVE FALSE
 #define OPTICFLOW_FAST9_THRESHOLD 5
-#define OPTICFLOW_FAST9_MIN_DISTANCE 20
+#define OPTICFLOW_FAST9_MIN_DISTANCE 10
 
 /* ### Defaults defined for bebop ###*/
 #define OPTICFLOW_DEVICE /dev/video1				// Path to video device
 #define OPTICFLOW_DEVICE_SIZE 1408,2112				// (int) width [px], (int) height [px] | Video device resolution
 
 /* Video device buffers */
-#define OPTICFLOW_DEVICE_BUFFERS 6					// (int) | Video device V4L2 buffers default: 15
+#define OPTICFLOW_DEVICE_BUFFERS 15		// (int) | Video device V4L2 buffers default: 15
 
 /* Optical flow variables */
-#define OPTICFLOW_PADDING 20,20 				// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
+#define OPTICFLOW_PADDING 50,70	// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
 #define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 544, 544
 #define OPTICFLOW_SORT 272
 
 /* Debugging */
 #define PERIODIC_TELEMETRY TRUE
 #define OPTICFLOW_DEBUG TRUE
-#define VIDEO_SIZE 272,272				// 272,272
+#define VIDEO_SIZE OPTICFLOW_PROCESS_SIZE				// 272,272
 #define VIDEO_THREAD_SHOT_PATH "/data/ftp/internal_000/images"
 
 /* ### Storage variables ### */
@@ -60,7 +60,6 @@
 struct opticflow_t opticflow;						// Opticflow calculations
 static struct opticflow_result_t opticflow_result;	// Opticflow results
 static struct v4l2_device *opticflow_dev;			// The opticflow camera V4L2 device
-static bool_t opticflow_got_result;                	// When we have an optical flow calculation
 
 /* Threads and mutexes*/
 static pthread_t opticflow_calc_thread;            	// The optical flow calculation thread
@@ -74,7 +73,7 @@ static pthread_mutex_t opticflow_mutex;            	// Mutex lock for thread saf
 static void *opticflow_module_calc(void *data);		// Main optical flow calculation thread
 static int sort_on_x(const void *a, const void *b);
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime);		// Calculation of timedifference for FPS
-static int cmp_flow(const void *a, const void *b);
+//static int cmp_flow(const void *a, const void *b);
 static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number);
 
 void opticflow_module_run(void){};
@@ -127,8 +126,6 @@ void opticflow_module_init(void){
 	opticflowp->fast9_threshold = OPTICFLOW_FAST9_THRESHOLD;
 	opticflowp->fast9_min_distance = OPTICFLOW_FAST9_MIN_DISTANCE;
 
-	//opticflow_got_result = FALSE;
-
 	/* Initialise video device settings */
 	// Initialise the main video device
 	opticflow_dev = v4l2_init("/dev/video1", OPTICFLOW_DEVICE_SIZE, OPTICFLOW_DEVICE_BUFFERS, V4L2_PIX_FMT_SGBRG10);
@@ -169,16 +166,19 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 	udp_socket_create(&video_sock, STRINGIFY(BEBOP_FRONT_CAMERA_HOST), 5000, -1, TRUE);
 	#endif
 
-	//struct image_t img_down;
-	//image_create(&img_down, VIDEO_SIZE, IMAGE_YUV422);
+	struct image_t img;
+	image_create(&img, OPTICFLOW_PROCESS_SIZE, IMAGE_YUV422);
+
 	/* Main loop of the optic flow calculation	 */
 	int counter = 1;
 	while(TRUE){
 		/* Define image */
-		struct image_t img;
+		struct image_t img_dev;
 
 		// Get image from v4l2 with native size
-		v4l2_image_get(opticflow_dev, &img);
+		v4l2_image_get(opticflow_dev, &img_dev);
+		BayerToYUV(&img_dev, &img, 0, 0);
+
 		//printf("%d, %d\n",img.w, img.h);
 
 		/* Do optical flow calculations */
@@ -189,35 +189,32 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 		//Copy results to shared result memory
 		pthread_mutex_lock(&opticflow_mutex);
 		memcpy(&opticflow_result, &temp_result, sizeof(struct opticflow_result_t));
-		//opticflow_got_result = TRUE;
 		pthread_mutex_unlock(&opticflow_mutex);
 
 		#if OPTICFLOW_DEBUG
-			BayerToYUV(&img, &img_color, 0, 0);
+			//BayerToYUV(&img, &img_color, 0, 0);
 			//image_copy(&img_ph, &img_color);
-			//video_thread_save_shot(&img_color, $img_jpeg, counter);
-			jpeg_encode_image(&img_color, &img_jpeg, 80, 0);
+			//video_thread_save_shot(&img, &img_jpeg, counter);
+			jpeg_encode_image(&img, &img_jpeg, 90, 0);
 			rtp_frame_send(
 			  &video_sock,           // UDP device
 			  &img_jpeg,
 			  0,                        // Format 422
-			  80, // Jpeg-Quality
+			  90, // Jpeg-Quality
 			  0,                        // DRI Header
 			  0                         // 90kHz time increment
 			);
 		#endif
 
 		/* Free image */
-		v4l2_image_free(opticflow_dev, &img);
+		v4l2_image_free(opticflow_dev, &img_dev);
 
 		counter++;
 	}
-	//image_free(&img_down);
 
 	#if OPTICFLOW_DEBUG
 	  image_free(&img_jpeg);
 	  image_free(&img_color);
-	  //image_free(&img_ph);
 	#endif
 }
 
@@ -235,9 +232,9 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 									struct opticflow_result_t *result){
 
-	struct image_t img_scaled;
-	image_create(&img_scaled, OPTICFLOW_PROCESS_SIZE,IMAGE_YUV422);
-	image_copy(&img, &img_scaled);
+	//struct image_t img_scaled;
+	//image_create(&img_scaled, OPTICFLOW_PROCESS_SIZE,IMAGE_YUV422);
+	//image_copy(&img, &img_scaled);
 
 	// Update FPS for information
 	result->fps = 1/(timeval_diff(&opticflowin->prev_timestamp,&img->ts) / 1000.);
@@ -255,7 +252,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 	/* Corner detection */
 	// FAST corner detection
-	struct point_t *corners = fast9_detect(&img_scaled, opticflowin->fast9_threshold, opticflowin->fast9_min_distance,
+	struct point_t *corners = fast9_detect(img, opticflowin->fast9_threshold, opticflowin->fast9_min_distance,
 											OPTICFLOW_PADDING, &result->corner_cnt);
 
 	// FAST Adaptive threshold
@@ -288,32 +285,14 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 	image_show_flow(img, vectors, result->tracked_cnt, opticflowin->subpixel_factor);
 
+	/* ALSO DO COLOUR AVOISION */
+	int color_avg_x;
+	int color_avg_y;
+	int color_count;
+	image_yuv422_colorfilt_ext(img,img,&color_count,&color_avg_x,&color_avg_y,0,131,93,255,134,255);
+	printf("%d, %d\n", color_avg_x, color_count);
+
 	/* Do something with the flow EDIT HERE*/
-	// Get the median flow
-	//qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), cmp_flow);
-
-	qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
-
-	if (result->tracked_cnt == 0) {
-	// We got no flow
-	result->flow_x = 0;
-	result->flow_y = 0;
-	} else if (result->tracked_cnt > 3) {
-	// Take the average of the 3 median points
-	result->flow_x = vectors[result->tracked_cnt / 2 - 1].flow_x;
-	result->flow_y = vectors[result->tracked_cnt / 2 - 1].flow_y;
-	result->flow_x += vectors[result->tracked_cnt / 2].flow_x;
-	result->flow_y += vectors[result->tracked_cnt / 2].flow_y;
-	result->flow_x += vectors[result->tracked_cnt / 2 + 1].flow_x;
-	result->flow_y += vectors[result->tracked_cnt / 2 + 1].flow_y;
-	result->flow_x /= 3;
-	result->flow_y /= 3;
-	} else {
-	// Take the median point
-	result->flow_x = vectors[result->tracked_cnt / 2].flow_x;
-	result->flow_y = vectors[result->tracked_cnt / 2].flow_y;
-	}
-
 	qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
 
 	int iter;
@@ -321,12 +300,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	//float AwesomeArray[OPTICFLOW_SORT];
 
 	for(iter=0; iter<result->tracked_cnt; iter++){
-		printf("%d, ",vectors[iter].flow_x);
+		//printf("X: %d, F: %d \n",vectors[iter].pos.x/OPTICFLOW_SUBPIXEL_FACTOR,vectors[iter].flow_x);
 		//n=vectors[iter-1].pos.x / opticflowin->subpixel_factor;
 		//AwesomeArray[n] += 1/((float)(vectors[iter-1].flow_x * vectors[iter-1].flow_x + vectors[iter-1].flow_y * vectors[iter-1].flow_y));
 		//printf("%f, ",AwesomeArray[n]);
 	}
-	printf("\n");
+	//printf("\n");
 
 	/* Next loop preperations */
 	free(corners);
@@ -408,20 +387,13 @@ static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishti
  * @param[in] *b The second flow vector (should be vect flow_t)
  * @return Negative if b has more flow than a, 0 if the same and positive if a has more flow than b
  */
-static int cmp_flow(const void *a, const void *b)
+/*static int cmp_flow(const void *a, const void *b)
 {
   const struct flow_t *a_p = (const struct flow_t *)a;
   const struct flow_t *b_p = (const struct flow_t *)b;
   return (a_p->flow_x * a_p->flow_x + a_p->flow_y * a_p->flow_y) - (b_p->flow_x * b_p->flow_x + b_p->flow_y *
          b_p->flow_y);
-}
-
-static int sort_on_x(const void *a, const void *b)
-{
-	const struct flow_t *a_p = (const struct flow_t *)a;
-	const struct flow_t *b_p = (const struct flow_t *)b;
-	return (a_p->pos.x ) - (b_p->pos.x) ;
-}
+}*/
 
 static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number)
 {
