@@ -1,0 +1,14 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="testg4_module">
+  <doc>
+    <description>Test module wait block</description>
+  </doc>
+  <header>
+    <file name="testg4_module.h"/>
+  </header>
+  <makefile>
+    <file name="testg4_module.c"/>
+  </makefile>
+</module>
+

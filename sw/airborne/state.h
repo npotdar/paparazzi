@@ -799,6 +799,7 @@ static inline void stateSetSpeedNed_f(struct NedCoor_f *ned_speed)
 /// Set ground speed in local ENU coordinates (float).
 static inline void stateSetSpeedEnu_f(struct EnuCoor_f *enu_speed)
 {
+  //printf("speed x,y,z internal is: %f,%f,%f\n",enu_speed->x,enu_speed->y,enu_speed->z);
   VECT3_COPY(state.enu_speed_f, *enu_speed);
   /* clear bits for all speed representations and only set the new one */
   state.speed_status = (1 << SPEED_ENU_F);

@@ -7,7 +7,7 @@ from os import path, getenv
 
 # if PAPARAZZI_SRC not set, then assume the tree containing this
 # file is a reasonable substitute
-PPRZ_SRC = getenv("PAPARAZZI_SRC", path.normpath(path.join(path.dirname(path.abspath(__file__)), '../../../../')))
+PPRZ_SRC = getenv("PAPARAZZI_SRC", path.normpath(path.join(path.dirname(path.abspath(__file__)), '../../../')))
 sys.path.append(PPRZ_SRC + "/sw/lib/python")
 
 from ivy_msg_interface import IvyMessagesInterface
@@ -16,6 +16,7 @@ from settings_xml_parse import PaparazziACSettings
 
 from math import radians
 from time import sleep
+
 
 class Guidance(object):
     def __init__(self, ac_id, verbose=False):
@@ -117,16 +118,19 @@ class Guidance(object):
 
 if __name__ == '__main__':
     ac_id = 30
-    g = Guidance(ac_id)
-    sleep(0.1)
-    g.set_guided_mode()
-    sleep(0.2)
-    g.goto_ned(north=10.0, east=5.0, down=-5.0, heading=radians(90))
-    sleep(10)
-    g.goto_ned_relative(north=-5.0, east=-5.0, down=-2.0, yaw=-radians(45))
-    sleep(10)
-    g.goto_body_relative(forward=0.0, right=5.0, down=2.0)
-    sleep(10)
-    g.set_nav_mode()
-    sleep(0.2)
+    try:
+        g = Guidance(ac_id)
+        sleep(0.1)
+        g.set_guided_mode()
+        sleep(0.2)
+        g.goto_ned(north=10.0, east=5.0, down=-5.0, heading=radians(90))
+        sleep(10)
+        g.goto_ned_relative(north=-5.0, east=-5.0, down=-2.0, yaw=-radians(45))
+        sleep(10)
+        g.goto_body_relative(forward=0.0, right=5.0, down=2.0)
+        sleep(10)
+        g.set_nav_mode()
+        sleep(0.2)
+    except KeyboardInterrupt:
+        print("Stopping on request")
     g.shutdown()

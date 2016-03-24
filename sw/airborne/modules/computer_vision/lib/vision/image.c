@@ -533,3 +533,76 @@ void image_draw_line(struct image_t *img, struct point_t *from, struct point_t *
     }
   }
 }
+
+/**
+ * CUSTOM Filter colors in an YUV422 image and output average x,y position also
+ * @param[in] *input The input image to filter
+ * @param[out] *output The filtered output image
+ * @param[in] y_m The Y minimum value
+ * @param[in] y_M The Y maximum value
+ * @param[in] u_m The U minimum value
+ * @param[in] u_M The U maximum value
+ * @param[in] v_m The V minimum value
+ * @param[in] v_M The V maximum value
+ * @return Structure of The amount of filtered pixels
+ */
+void image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, int* img_ccount, int* img_cxavg, int* img_cyavg, uint8_t y_m, uint8_t y_M, uint8_t u_m,
+                                uint8_t u_M, uint8_t v_m, uint8_t v_M)
+{
+  uint8_t *source = input->buf;
+  uint8_t *dest = output->buf;
+
+  int process_output[3] = {0,0,0};
+
+  // Copy the creation timestamp (stays the same)
+  memcpy(&output->ts, &input->ts, sizeof(struct timeval));
+
+  // Go trough all the pixels
+  for (uint16_t y = 0; y < output->h; y++) {
+    for (uint16_t x = 0; x < output->w; x += 2) {
+      // Check if the color is inside the specified values
+      if (
+        (dest[1] >= y_m)
+        && (dest[1] <= y_M)
+        && (dest[0] >= u_m)
+        && (dest[0] <= u_M)
+        && (dest[2] >= v_m)
+        && (dest[2] <= v_M)
+      ) {
+        process_output[0] += 1;
+        process_output[1] += (int)x;
+        process_output[2] += (int)y;
+
+        // UYVY
+        dest[0] = 64;        // U
+        dest[1] = source[1];  // Y
+        dest[2] = 255;        // V
+        dest[3] = source[3];  // Y
+      } else {
+        // UYVY
+        char u = source[0] - 127;
+        u /= 4;
+        dest[0] = 127;        // U
+        dest[1] = source[1];  // Y
+        u = source[2] - 127;
+        u /= 4;
+        dest[2] = 127;        // V
+        dest[3] = source[3];  // Y
+      }
+
+      // Go to the next 2 pixels
+      dest += 4;
+      source += 4;
+    }
+  }
+  *img_ccount = process_output[0];
+  // Calculate average
+  if(process_output[0]!=0){
+	  *img_cxavg = process_output[1]/(process_output[0]);
+	  *img_cyavg = process_output[2]/(process_output[0]);
+  } else {
+	  *img_cxavg = (process_output[0]);
+	  *img_cyavg = (process_output[0]);
+  }
+}
+

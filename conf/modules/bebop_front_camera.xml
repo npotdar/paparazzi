@@ -8,7 +8,7 @@
     </description>
     <define name="BEBOP_FRONT_CAMERA_SHOT_PATH" value="/data/ftp/internal_000/images" description="Path where the images should be saved"/>
     <configure name="BEBOP_FRONT_CAMERA_HOST" value="192.168.1.255" description="GCS IP (default: MODEM_HOST)"/>
-    <configure name="BEBOP_FRONT_CAMERA_PORT_OUT" value="6000" description="Port (default: 5000)"/>
+    <configure name="BEBOP_FRONT_CAMERA_PORT_OUT" value="5000" description="Port (default: 5000)"/>
     <configure name="BEBOP_FRONT_CAMERA_BROADCAST" value="FALSE|TRUE" description="Enable broadcast of image stream (default: TRUE)"/>
   </doc>
   <settings>
@@ -47,7 +47,7 @@
       include $(CFG_SHARED)/udp.makefile
 
       BEBOP_FRONT_CAMERA_HOST        ?= $(MODEM_HOST)
-      BEBOP_FRONT_CAMERA_PORT_OUT    ?= 6000
+      BEBOP_FRONT_CAMERA_PORT_OUT    ?= 5000
       BEBOP_FRONT_CAMERA_BROADCAST   ?= TRUE
 
       BEBOPVIEWVID_CFLAGS  = -DBEBOP_FRONT_CAMERA_HOST=$(BEBOP_FRONT_CAMERA_HOST) -DBEBOP_FRONT_CAMERA_PORT_OUT=$(BEBOP_FRONT_CAMERA_PORT_OUT)

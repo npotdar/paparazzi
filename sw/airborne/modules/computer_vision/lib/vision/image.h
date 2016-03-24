@@ -80,4 +80,7 @@ void image_show_points(struct image_t *img, struct point_t *points, uint16_t poi
 void image_show_flow(struct image_t *img, struct flow_t *vectors, uint16_t points_cnt, uint8_t subpixel_factor);
 void image_draw_line(struct image_t *img, struct point_t *from, struct point_t *to);
 
+/* CUSTOM FILTER */
+void image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, int* img_ccount, int* img_cxavg, int* img_cyavg, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M);
+
 #endif

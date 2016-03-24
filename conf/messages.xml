@@ -859,7 +859,11 @@
     <field name="last_msg" type="uint8[]"/>
   </message>
 
-  <!--107 is free -->
+  <message name="COLORFILTER" id="107">
+    <field name="color_count" type="int32"/>
+  </message>
+
+
   <!--108 is free -->
 
   <message name="MULTIGAZE_METERS" id="109">
@@ -1981,12 +1985,21 @@
     <field name="divergence"    type="float" unit="1/s"/>
   </message>
 
+
+
   <message name="STEREO_IMG" id="229">
     <field name="frequency" type="uint8"/>
     <field name="data_size" type="uint8"/>
     <field name="imageBuffer" type="uint8[]"/>
   </message>
 
+  <message name="OFG" id="230">
+    <field name="fps"         type="float"/>
+    <field name="corner_cnt"  type="uint16"/>
+    <field name="tracked_cnt" type="uint16"/>
+    <field name="flow_x"      type="int16" unit="subpixels"/>
+    <field name="flow_y"      type="int16" unit="subpixels"/>
+  </message>
   <!--230 is free -->
 
   <message name="ROTORCRAFT_STATUS" id="231">
