@@ -293,42 +293,33 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	/* Do something with the flow EDIT HERE*/
 	//qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
 
-	/* BUILD AWESOME ARRAY*/
+	/*BUILD SEGMENTED ARRAY */
 	int n;
 	int iter;
 	int magnitude_squared;
 	float magnitude_root;
-	double AwesomeArray[272]
 
-	for (iter=0;iter < result->tracked_cnt ; iter++)
-		{
-			n=vectors[iter].pos.x/OPTICFLOW_SUBPIXEL_FACTOR;
-			magnitude_squared = (vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR + vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR);
-			float magnitude_root = sqrtf(magnitude_squared);
-			AwesomeArray[n] += 1/magnitude_root;
-	    }
-
-	/*BUILD SEGMENTED ARRAY */
 	int no_segments=5;
 	int segment_size=272/no_segments;
 	double segmented_array[no_segments];
 
-	for (iter=0; iter<(sizeof (AwesomeArray) /sizeof (AwesomeArray[0])); iter++)
+	for (iter=0; iter<result->tracked_cnt; iter++)
 		{
+		magnitude_squared = (vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR + vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR);
+		magnitude_root = sqrtf(magnitude_squared);
 			for (n=1; n<=no_segments; n++)
 				{
-					if (i<(n*segment_size))
+					if (vectors[i].pos.x<(n*segment_size))
 					{
-						segmented_array[n] += AwesomeArray[iter];
+						segmented_array[n] += (1/magnitude_root);
 					}
 					else
 					{
-						segmented_array[no_segments] += AwesomeArray[iter];
+						segmented_array[no_segments] += (1/magnitude_root);
 					}
 				}
 		}
 
-		printf("x magnitude\n");
 		for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
 				{
 					printf("x: %d depth: %f \n",iter+1, segmented_array[iter]);
