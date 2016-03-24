@@ -24,13 +24,13 @@
 //#include BOARD_CONFIG
 
 /* ### Defaults defined for opticalflow SEE .H FILE!!! ###*/
-#define OPTICFLOW_MAX_TRACK_CORNERS 20
-#define OPTICFLOW_WINDOW_SIZE 20
+#define OPTICFLOW_MAX_TRACK_CORNERS 30
+#define OPTICFLOW_WINDOW_SIZE 14
 #define OPTICFLOW_SUBPIXEL_FACTOR 10
 #define OPTICFLOW_MAX_ITERATIONS 10
 #define OPTICFLOW_THRESHOLD_VEC 2
 #define OPTICFLOW_FAST9_ADAPTIVE FALSE
-#define OPTICFLOW_FAST9_THRESHOLD 25
+#define OPTICFLOW_FAST9_THRESHOLD 5
 #define OPTICFLOW_FAST9_MIN_DISTANCE 10
 
 /* ### Defaults defined for bebop ###*/
@@ -265,6 +265,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		}
 	}
 
+	image_show_points(img, corners, result->corner_cnt);
+
 
 	// FAST Check if corners were detected
 	if (result->corner_cnt < 1){
@@ -281,6 +283,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
             opticflowin->window_size / 2, opticflowin->subpixel_factor, opticflowin->max_iterations,
             opticflowin->threshold_vec, opticflowin->max_track_corners);
 
+	//image_show_flow(img, vectors, result->tracked_cnt, opticflowin->subpixel_factor);
+
 	/* ALSO DO COLOUR AVOISION */
 	int color_avg_x;
 	int color_avg_y;
@@ -288,47 +292,16 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	image_yuv422_colorfilt_ext(img,img,&color_count,&color_avg_x,&color_avg_y,0,131,93,255,134,255);
 	printf("%d, %d\n", color_avg_x, color_count);
 
-	//image_show_points(img, corners, result->corner_cnt);
-	image_show_flow(img, vectors, result->tracked_cnt, opticflowin->subpixel_factor);
 	/* Do something with the flow EDIT HERE*/
-	//qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
+	qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
 
-	/*BUILD SEGMENTED ARRAY */
-	int n;
 	int iter;
-	int magnitude_squared;
-	float magnitude_root;
 
-	int no_segments=5;
-	int segment_size=272/no_segments;
-	double segmented_array[no_segments];
+	for(iter=0; iter<result->tracked_cnt; iter++){
+		//printf("X: %d, F: %d \n",vectors[iter].pos.x/OPTICFLOW_SUBPIXEL_FACTOR,vectors[iter].flow_x);
 
-	for (iter=0; iter<result->tracked_cnt; iter++)
-		{
-		magnitude_squared = (vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR + vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR);
-		magnitude_root = sqrtf(magnitude_squared);
-			for (n=1; n<=no_segments; n++)
-				{
-					if (vectors[i].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR <(n*segment_size))
-					{
-						segmented_array[n] += (1/magnitude_root);
-					}
-					else
-					{
-						segmented_array[no_segments] += (1/magnitude_root);
-					}
-				}
-		}
+	}
 
-		for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
-				{
-					printf("x: %d depth: %f \n",iter+1, segmented_array[iter]);
-				}
-	/*for(iter=0; iter<result->tracked_cnt; iter++){
-		printf("X: %d, F: %d \n",vectors[iter].pos.x/OPTICFLOW_SUBPIXEL_FACTOR,vectors[iter].flow_x);
-
-	}*/
-	printf("\n\n");
 	/* Next loop preperations */
 	free(corners);
 	free(vectors);

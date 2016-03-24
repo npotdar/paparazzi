@@ -558,8 +558,8 @@ void image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, i
   memcpy(&output->ts, &input->ts, sizeof(struct timeval));
 
   // Go trough all the pixels
-  for (uint16_t y = 0; y < output->h; y++) {
-    for (uint16_t x = 0; x < output->w; x += 2) {
+  for (uint16_t y = 0; y < (output->h); y++) {
+    for (uint16_t x = 0; x < (output->w); x += 2) {
       // Check if the color is inside the specified values
       if (
         (dest[1] >= y_m)
