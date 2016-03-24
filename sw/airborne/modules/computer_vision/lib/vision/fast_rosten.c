@@ -63,7 +63,7 @@ struct point_t *fast9_detect(struct image_t *img, uint8_t threshold, uint16_t mi
   fast_make_offsets(pixel, img->w, pixel_size);
 
   // Go trough all the pixels (minus the borders)
-  for (y = 3 + y_padding; y < img->h - 3 - y_padding; y++)
+  for (y = 3 + y_padding*0.8; y < img->h - 3 - y_padding*1.4; y++)
     for (x = 3 + x_padding; x < img->w - 3 - x_padding; x++) {
       // First check if we aren't in range vertical (TODO: fix less intensive way)
       if (min_dist > 0) {

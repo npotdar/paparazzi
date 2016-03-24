@@ -24,14 +24,14 @@
 //#include BOARD_CONFIG
 
 /* ### Defaults defined for opticalflow SEE .H FILE!!! ###*/
-#define OPTICFLOW_MAX_TRACK_CORNERS 30
+#define OPTICFLOW_MAX_TRACK_CORNERS 20
 #define OPTICFLOW_WINDOW_SIZE 20
 #define OPTICFLOW_SUBPIXEL_FACTOR 10
 #define OPTICFLOW_MAX_ITERATIONS 10
 #define OPTICFLOW_THRESHOLD_VEC 2
 #define OPTICFLOW_FAST9_ADAPTIVE FALSE
-#define OPTICFLOW_FAST9_THRESHOLD 11
-#define OPTICFLOW_FAST9_MIN_DISTANCE 5
+#define OPTICFLOW_FAST9_THRESHOLD 25
+#define OPTICFLOW_FAST9_MIN_DISTANCE 10
 
 /* ### Defaults defined for bebop ###*/
 #define OPTICFLOW_DEVICE /dev/video1				// Path to video device
@@ -42,7 +42,6 @@
 
 /* Optical flow variables */
 #define OPTICFLOW_PADDING 50,70	// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
-#define PAD_SORT 50
 #define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 544, 544
 #define OPTICFLOW_SORT 272
 
@@ -301,20 +300,23 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	float magnitude_root;
 
 	int no_segments=5;
-	int segment_size=(272 - 2*PAD_SORT)/no_segments;
+	int segment_size=272/no_segments;
 	double segmented_array[no_segments];
 
 	for (iter=0; iter<result->tracked_cnt; iter++)
 		{
-		magnitude_squared = (vectors[iter].flow_x * vectors[iter].flow_x  + vectors[iter].flow_y * vectors[iter].flow_y);
+		magnitude_squared = (vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR + vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR);
 		magnitude_root = sqrtf(magnitude_squared);
-			for (n=0; n<no_segments; n++)
+			for (n=1; n<=no_segments; n++)
 				{
-					if ((vectors[iter].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR)<(((n+1)*segment_size) + PAD_SORT) && (vectors[iter].pos.x  / OPTICFLOW_SUBPIXEL_FACTOR)>(((n)*segment_size) + PAD_SORT))
+					if (vectors[i].pos.x<(n*segment_size))
 					{
 						segmented_array[n] += (1/magnitude_root);
 					}
-
+					else
+					{
+						segmented_array[no_segments] += (1/magnitude_root);
+					}
 				}
 		}
 
@@ -322,10 +324,10 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 				{
 					printf("x: %d depth: %f \n",iter+1, segmented_array[iter]);
 				}
-	for(iter=0; iter<result->tracked_cnt; iter++){
+	/*for(iter=0; iter<result->tracked_cnt; iter++){
 		printf("X: %d, F: %d \n",vectors[iter].pos.x/OPTICFLOW_SUBPIXEL_FACTOR,vectors[iter].flow_x);
 
-	}
+	}*/
 	printf("\n\n");
 	/* Next loop preperations */
 	free(corners);
