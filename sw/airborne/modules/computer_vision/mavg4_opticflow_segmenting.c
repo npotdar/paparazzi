@@ -293,37 +293,44 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	/* Do something with the flow EDIT HERE*/
 	//qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
 
-	/*BUILD SEGMENTED ARRAY */
+	/*BUILD SEGMENTED ARRAY - START */
 	int n;
 	int iter;
 	int magnitude_squared;
 	float magnitude_root;
 
 	int no_segments=5;
-	int segment_size=272/no_segments;
+	int segment_size=(272 - 2 * PAD_SORT)/no_segments;
 	double segmented_array[no_segments];
+	double magnitude_array[no_segments];
 
+	/* CONSTRUCT FLOW MATRIX */
 	for (iter=0; iter<result->tracked_cnt; iter++)
 		{
-		magnitude_squared = (vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_x / OPTICFLOW_SUBPIXEL_FACTOR + vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR * vectors[i].flow_y / OPTICFLOW_SUBPIXEL_FACTOR);
+		magnitude_squared = (vectors[i].flow_x * vectors[i].flow_x + vectors[i].flow_y * vectors[i].flow_y );
 		magnitude_root = sqrtf(magnitude_squared);
-			for (n=1; n<=no_segments; n++)
+			for (n=0; n<no_segments; n++)
 				{
-					if (vectors[i].pos.x<(n*segment_size))
+					if (( (vectors[i].pos.x / OPTICFLOW_SUBPIXEL_FACTOR)>(n*segment_size + PAD_SORT) ) && ( (vectors[i].pos.x / OPTICFLOW_SUBPIXEL_FACTOR) <= ((n+1)*segment_size + PAD_SORT) ) )
 					{
-						segmented_array[n] += (1/magnitude_root);
-					}
-					else
-					{
-						segmented_array[no_segments] += (1/magnitude_root);
+						magnitude_array[n] = (magnitude_array[n] + (magnitude_root));
 					}
 				}
 		}
 
-		for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
-				{
-					printf("x: %d depth: %f \n",iter+1, segmented_array[iter]);
-				}
+	/* CONSTRUCT INVERSE FLOW MATRIX */
+	for (n=0; n<no_segments; n++)
+	{
+		segmented_array[n]= 1/magnitude_array[n];
+	}
+
+	for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
+			{
+				printf("x: %d depth: %f \n",iter+1, segmented_array[iter]);
+			}
+
+		/*COPY UP TO HERE*/
+
 	/*for(iter=0; iter<result->tracked_cnt; iter++){
 		printf("X: %d, F: %d \n",vectors[iter].pos.x/OPTICFLOW_SUBPIXEL_FACTOR,vectors[iter].flow_x);
 
