@@ -41,6 +41,7 @@
   </sectors>
   <exceptions>
     <exception cond="!InsideObstacleZone(GetPosX(), GetPosY())" deroute="Standby"/>
+    <exception cond="objectDetected" deroute="change_heading"/>
     <!--exception cond="datalink_time > 2" deroute="Land here"/>
     <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>
     <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land here"/>-->
@@ -83,6 +84,7 @@
       <go wp="GOAL"/>
       <exception cond="block_time > 0.5" deroute="distance_test"/>
       <exception cond="minDistanceExceed()" deroute="prepareObstacle"/>
+      <deroute block="StayGoal"/>
       <!--exception cond="!safeToGoForwards" deroute="ChangeHeading"/>
       <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
     </block>
@@ -106,13 +108,20 @@
       <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
     </block>
     <block name="distance_test">
-    	<call fun="moveWaypointForwards(WP_GOAL,2.0)"/>
+    	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
     	<deroute block="StayGoal"/>
     	<exception cond="minDistanceExceed()" deroute="prepareObstacle"/>
     </block>
     <block name="distance_test2">
-    	<call fun="moveWaypointForwards(WP_GOAL,2.0)"/>
+    	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
     	<deroute block="getOut"/>
+    </block>
+    <block name="change_heading">
+    	<call fun="NavSetWaypointHere(WP_GOAL)"/> 
+    	<call fun="changeHeading()"/>
+    	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
+    	<stay wp="STDBY"/>	
+    	<exception cond="block_time > 2" deroute="StayGoal"/>
     </block>
     <block key="l" name="Land here" strip_button="Land Here" strip_icon="land-right.png">
       <call fun="NavSetWaypointHere(WP_TD)"/>

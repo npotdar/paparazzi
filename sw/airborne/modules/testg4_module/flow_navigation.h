@@ -11,12 +11,13 @@ extern float distthresh;
 extern float wallscale;
 extern float objectscale;
 extern float objectdet;
+extern uint8_t objectDetected;
 
 
 extern void flow_navigation_init(void);
 //extern uint8_t flow_test(void);
 extern uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters);
-extern uint8_t increase_nav_heading(int32_t *heading, int32_t increment);
+extern uint8_t changeHeading();
 extern uint8_t chooseRandomIncrementAvoidance();
 
 #endif

@@ -10,9 +10,10 @@ int32_t incrementForAvoidance;
 uint8_t safeToGoForwards;
 float incrx = 0.0;
 float incry = 0.8;
-float distthresh = 1;
+float distthresh = 1.4;
 float wallscale = 10;
 float objectscale = -0.01745;
+float pidiv180 = 0.01745;
 float objectdet = 0;
 float Vx = 0;
 float Vy = 1;
@@ -20,6 +21,7 @@ float yxratio = 1;
 float mindistance=10;
 uint8_t wp_target;
 uint8_t wp_heading;
+uint8_t objectDetected = 0;
 
 struct Line{
 	float a;
@@ -78,11 +80,15 @@ float capFun(float in, float upBound, float lowBound){
 /**
  * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
  */
-uint8_t increase_nav_heading(int32_t *heading, int32_t increment)
+uint8_t changeHeading()
 {
-  *heading = *heading + increment;
+	printf("nav heading before is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
+	nav_set_heading_deg(ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180+90);
+	printf("nav heading after is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
+  //nav_heading = nav_heading + objectdet;
   // Check if your turn made it go out of bounds...
-  INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
+  //INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
+	moveWaypointForwards(wp_target,1.0);
   return FALSE;
 }
 
@@ -238,7 +244,6 @@ uint8_t distToLine(){
 }
 
 uint8_t minDistanceExceed(){
-	printf("mindistance %f\n",mindistance);
 	return mindistance<distthresh;
 }
 
