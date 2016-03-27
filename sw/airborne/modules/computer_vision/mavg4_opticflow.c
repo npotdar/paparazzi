@@ -23,6 +23,13 @@
 // include board for bottom_camera and front_camera on ARDrone2 and Bebop
 //#include BOARD_CONFIG
 
+/* ### Defaults defined for bebop ### */
+#define OPTICFLOW_DEVICE /dev/video1				// Path to video device
+#define OPTICFLOW_DEVICE_SIZE 1408,2112				// (int) width [px], (int) height [px] | Video device resolution
+
+/* Video device buffers */
+#define OPTICFLOW_DEVICE_BUFFERS 15		// (int) | Video device V4L2 buffers default: 15
+
 /* ### Defaults defined for opticalflow SEE .H FILE! ###*/
 #define OPTICFLOW_MAX_TRACK_CORNERS 30
 #define OPTICFLOW_WINDOW_SIZE 20
@@ -33,14 +40,7 @@
 #define OPTICFLOW_FAST9_THRESHOLD 11
 #define OPTICFLOW_FAST9_MIN_DISTANCE 5
 
-/* ### Defaults defined for bebop ###*/
-#define OPTICFLOW_DEVICE /dev/video1				// Path to video device
-#define OPTICFLOW_DEVICE_SIZE 1408,2112				// (int) width [px], (int) height [px] | Video device resolution
-
-/* Video device buffers */
-#define OPTICFLOW_DEVICE_BUFFERS 15		// (int) | Video device V4L2 buffers default: 15
-
-/* Optical flow variables */
+/* Optical flow and processing variables */
 #define OPTICFLOW_PADDING 50,70	// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
 #define PAD_SORT 50
 #define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 544, 544
@@ -54,7 +54,19 @@
 #define VIDEO_SIZE OPTICFLOW_PROCESS_SIZE				// 272,272
 #define VIDEO_THREAD_SHOT_PATH "/data/ftp/internal_000/images"
 
+/* ### Global data used for obstacle avoidance ### */
+float DETECT_THRESHOLD = 1;							// (float) | Threshold for depth
+float OBS_HEADING_SET = 60.0;						// (float) | Heading change on detection
+
+uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
+float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
+
+uint8_t ERROR_COUNT = 0;							// (int) | Image Error counter
+float ERROR_THRESHOLD = 0.0;							// (float) | Image Error threshold
+float ERROR_ADD = 0.0;								// (float) | Image Error addition image difference
+
 /* ### Storage variables ### */
+
 #if OPTICFLOW_DEBUG
 	  struct UdpSocket video_sock;
 	  //struct image_t img_jpeg;
@@ -69,27 +81,18 @@ static pthread_t opticflow_calc_thread;            	// The optical flow calculat
 
 static pthread_mutex_t opticflow_mutex;            	// Mutex lock for thread safety
 
-// Global data used for obstacle avoidance
-float DETECT_THRESHOLD = 1;							// (float) | Threshold for depth
-float OBS_HEADING_SET = 60.0;						// (float) | Heading change on detection
-
-uint8_t OBS_DETECT = FALSE;							// Obstacle detected?
-float OBS_HEADING = 0.0;								// Obstacle heaing change
-
-uint8_t ERROR_COUNT = 0;							// Error counter
-float ERROR_THRESHOLD = 0.0;							// Error threshold
-float ERROR_ADD = 0.0;								// Error addition image difference
 
 
 /* ### Functions ### */
-//static void opticflow_module_run(void); 				// Dummy function
 static void *opticflow_module_calc(void *data);		// Main optical flow calculation thread
 static int sort_on_x(const void *a, const void *b);
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime);		// Calculation of timedifference for FPS
 //static int cmp_flow(const void *a, const void *b);
 static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number);
 
-void opticflow_module_run(void){};
+void opticflow_module_run(void){};					// Dummy function
+
+
 
 #if PERIODIC_TELEMETRY
 #include "subsystems/datalink/telemetry.h"
