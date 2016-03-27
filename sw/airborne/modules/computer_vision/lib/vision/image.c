@@ -606,3 +606,40 @@ void image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, i
   }
 }
 
+/**
+ * Calculate the one-to-one difference between two images and return the error
+ * This will only work with grayscale images
+ * @param[in] *img_a The image to substract from
+ * @param[in] *img_b The image to substract from img_a
+ * @param[out] *diff The image difference (if not needed can be NULL)
+ * @return The squared difference summed
+ */
+uint32_t image_1to1diff(struct image_t *img_a, struct image_t *img_b, struct image_t *diff)
+{
+  uint32_t sum_diff2 = 0;
+  int16_t *diff_buf = NULL;
+
+  // Fetch the buffers in the correct format
+  uint8_t *img_a_buf = (uint8_t *)img_a->buf;
+  uint8_t *img_b_buf = (uint8_t *)img_b->buf;
+
+  // If we want the difference image back
+  if (diff != NULL) {
+    diff_buf = (int16_t *)diff->buf;
+  }
+
+  // Go trough the imagge pixels and calculate the difference
+  for (uint16_t x = 0; x < img_b->w; x++) {
+    for (uint16_t y = 0; y < img_b->h; y++) {
+      int16_t diff_c = img_a_buf[(y) * img_a->w + (x)] - img_b_buf[y * img_b->w + x];
+      sum_diff2 += diff_c * diff_c;
+
+      // Set the difference image
+      if (diff_buf != NULL) {
+        diff_buf[y * diff->w + x] = diff_c;
+      }
+    }
+  }
+
+  return sum_diff2;
+}

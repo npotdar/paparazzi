@@ -82,5 +82,6 @@ void image_draw_line(struct image_t *img, struct point_t *from, struct point_t *
 
 /* CUSTOM FILTER */
 void image_yuv422_colorfilt_ext(struct image_t *input, struct image_t *output, int* img_ccount, int* img_cxavg, int* img_cyavg, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M);
+uint32_t image_1to1diff(struct image_t *img_a, struct image_t *img_b, struct image_t *diff);
 
 #endif
