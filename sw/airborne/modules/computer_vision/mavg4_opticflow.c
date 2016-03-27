@@ -305,7 +305,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 		int segment_size=(OPTICFLOW_SORT - 2*PAD_SORT)/SEGMENT_AMOUNT;
 		float segmented_array[SEGMENT_AMOUNT];
-		float magnitude_array[SEGMENT_AMOUNT];
+		//float magnitude_array[SEGMENT_AMOUNT];
 
 		// Construct flow matrix
 		for (iter=0; iter<result->tracked_cnt; iter++)
@@ -316,21 +316,21 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 					{
 						if (( (vectors[iter].pos.x / OPTICFLOW_SUBPIXEL_FACTOR)>(n*segment_size + PAD_SORT) ) && ( (vectors[iter].pos.x / OPTICFLOW_SUBPIXEL_FACTOR) <= ((n+1)*segment_size + PAD_SORT) ) )
 						{
-							magnitude_array[n] = (magnitude_array[n] + (magnitude_root));
+							segmented_array[n] = (segmented_array[n] + (magnitude_root));
 						}
 					}
 			}
 
-		// Construct reciprocal flow matrix
+		/* Construct reciprocal flow matrix
 		for (n=0; n<SEGMENT_AMOUNT; n++)
 		{
 			segmented_array[n]= (1/magnitude_array[n]);
-		}
+		}*/
 
 	#if OPTICFLOW_DEBUG
 		for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
 			{
-				printf("x: %d depth: %f \n",iter+1, segmented_array[iter]);
+				printf("x: %d depth rec: %f \n",iter+1, segmented_array[iter]);
 			}
 	#endif
 
@@ -340,7 +340,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 		if(!OBS_DETECT){
 		for(i = SEGMENT_AMOUNT/2 - fov; i <= SEGMENT_AMOUNT/2 + fov; i++){
-			if (segmented_array[i] < DETECT_THRESHOLD){
+			if (segmented_array[i] >= DETECT_THRESHOLD){
 				if(i < SEGMENT_AMOUNT/2){
 					OBS_DETECT = TRUE;
 					OBS_HEADING = OBS_HEADING_SET;
