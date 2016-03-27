@@ -1,0 +1,17 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="obs_function" dir="testg4_module">
+  <doc>
+    <description>ObsFunction</description>
+  </doc>
+
+  <depends>ObsFunctions</depends>
+  <header>
+    <file name="obs_function.h"/>
+  </header>
+  <periodic fun="obs_periodic()" freq="2"/>
+  <makefile>
+    <file name="obs_function.c"/>
+  </makefile>
+</module>
+

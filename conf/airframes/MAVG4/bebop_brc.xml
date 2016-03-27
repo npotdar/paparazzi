@@ -48,6 +48,7 @@
     </load>
     <load name="wpg4_module.xml"/>
     <load name="brg4_module.xml"/>
+	<load name="mavg4_obs_test.xml"/>
     <load name="video_rtp_stream.xml">
       <define name="VIEWVIDEO_QUALITY_FACTOR" value="80"/>
       <define name="VIEWVIDEO_DOWNSIZE_FACTOR" value="1"/>

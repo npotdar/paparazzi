@@ -1997,8 +1997,9 @@
     <field name="fps"         type="float"/>
     <field name="corner_cnt"  type="uint16"/>
     <field name="tracked_cnt" type="uint16"/>
-    <field name="flow_x"      type="int16" unit="subpixels"/>
-    <field name="flow_y"      type="int16" unit="subpixels"/>
+    <field name="depth"      type="float" unit="rel"/>
+    <field name="OBS_DETECT"      type="uint8" unit="bool"/>
+    <field name="heading_in"      type="float" unit="deg"/>
   </message>
   <!--230 is free -->
 

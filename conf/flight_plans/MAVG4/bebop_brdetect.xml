@@ -67,6 +67,14 @@
     <block name="START" strip_button="Go" strip_icon="lookfore.png">
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
     </block>
+    <block name="OBS_turn">
+      <call fun="obs_turn()"/>
+      <stay wp="HOME"/>
+    </block>
+    <block name="OBS_wait">
+      <stay wp="HOME"/>
+      <exception cond="OBS_DETECT" deroute="OBS_turn"/>
+    </block>
     <!--Detection and move-->
     <block name="StayHOME">
       <stay wp="HOME"/>
