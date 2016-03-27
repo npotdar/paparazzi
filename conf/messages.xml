@@ -1997,7 +1997,7 @@
     <field name="fps"         type="float"/>
     <field name="corner_cnt"  type="uint16"/>
     <field name="tracked_cnt" type="uint16"/>
-    <field name="depth"      type="float" unit="rel"/>
+    <field name="depth"      type="float[]" unit="rel"/>
     <field name="OBS_DETECT"      type="uint8" unit="bool"/>
     <field name="heading_in"      type="float" unit="deg"/>
   </message>

@@ -74,11 +74,9 @@ float DETECT_THRESHOLD = 1;							// (float) | Threshold for depth
 float OBS_HEADING_SET = 60.0;						// (float) | Heading change on detection
 
 uint8_t OBS_DETECT = FALSE;							// Obstacle detected?
-float OBS_HEADING = 0.0;								// Obstacle heaing change
+float OBS_HEADING = 0;								// Obstacle heaing change
 
-uint8_t ERROR_COUNT = 0;							// Error counter
-float ERROR_THRESHOLD = 0.0;							// Error threshold
-float ERROR_ADD = 0.0;								// Error addition image difference
+
 
 
 /* ### Functions ### */
@@ -103,8 +101,8 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
   pthread_mutex_lock(&opticflow_mutex);
   pprz_msg_send_OFG(trans, dev, AC_ID,
                                &opticflow_result.fps, &opticflow_result.corner_cnt,
-                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows,
-							   &opticflow_result.obs_detect, &opticflow_result.obs_heading);
+                               &opticflow_result.tracked_cnt, &opticflow_result.flows, &opticflow_result.obs_detect
+							   &opticflow_result.obs_heading);
   pthread_mutex_unlock(&opticflow_mutex);
 }
 #endif
@@ -185,7 +183,7 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 	image_create(&img, OPTICFLOW_PROCESS_SIZE, IMAGE_YUV422);
 
 	/* Main loop of the optic flow calculation	 */
-	//int counter = 0;
+	//int counter = 1;
 	while(TRUE){
 		/* Define image */
 		struct image_t img_dev;
@@ -193,6 +191,8 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 		// Get image from v4l2 with native size
 		v4l2_image_get(opticflow_dev, &img_dev);
 		BayerToYUV(&img_dev, &img, 0, 0);
+
+		//printf("%d, %d\n",img.w, img.h);
 
 		/* Do optical flow calculations */
 
@@ -248,6 +248,9 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 									struct opticflow_result_t *result){
 
+	//struct image_t img_scaled;
+	//image_create(&img_scaled, OPTICFLOW_PROCESS_SIZE,IMAGE_YUV422);
+	//image_copy(&img, &img_scaled);
 
 	// Update FPS for information
 	result->fps = 1/(timeval_diff(&opticflowin->prev_timestamp,&img->ts) / 1000.);
@@ -290,28 +293,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
             opticflowin->window_size / 2, opticflowin->subpixel_factor, opticflowin->max_iterations,
             opticflowin->threshold_vec, opticflowin->max_track_corners);
 
-
-	/* DO IMAGE DIFFERENCE AVOIDANCE */
-	if(!OBS_DETECT){
-	if(ERROR_COUNT == 4){
-		ERROR_COUNT = 0;
-		if(ERROR_ADD <= ERROR_THRESHOLD){
-			OBS_DETECT = TRUE;
-			OBS_HEADING = OBS_HEADING_SET;
-		}
-	}
-	ERROR_ADD += image_difference(&opticflowin->img_gray, &opticflowin->prev_img_gray, NULL);
-	};
-	printf("ERROR_COUNT: %d, ERROR_ADD: %f \n", ERROR_COUNT, ERROR_ADD);
-
-
-	/* ALSO DO COLOUR AVOIDANCE
+	/* ALSO DO COLOUR AVOIDANCE */
 	int color_avg_x;
 	int color_avg_y;
 	int color_count;
 	image_yuv422_colorfilt_ext(img,img,&color_count,&color_avg_x,&color_avg_y,0,131,93,255,134,255);
 	printf("%d, %d\n", color_avg_x, color_count);
-	*/
 
 #if OPTICFLOW_DEBUG
 	//image_show_points(img, corners, result->corner_cnt);
@@ -319,27 +306,29 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 #endif
 
 
-	/* DO FLOW BASED AVOIDANCE */
+	/* Do something with the flow EDIT HERE*/
 	//qsort(vectors, result->tracked_cnt, sizeof(struct flow_t), sort_on_x);
 
-	// Build segmented array
+	/*BUILD SEGMENTED ARRAY */
 	int n;
+	int i;
+	int fov = 2;
 	int iter;
 	int magnitude_squared;
 	float magnitude_root;
 
 	int segment_size=(OPTICFLOW_SORT - 2*PAD_SORT)/SEGMENT_AMOUNT;
-	float segmented_array[SEGMENT_AMOUNT];
-	float magnitude_array[SEGMENT_AMOUNT];
+	double segmented_array[SEGMENT_AMOUNT];
+	double magnitude_array[SEGMENT_AMOUNT];
 
 	// Construct flow matrix
 	for (iter=0; iter<result->tracked_cnt; iter++)
 		{
-		magnitude_squared = (vectors[iter].flow_x * vectors[iter].flow_x + vectors[iter].flow_y * vectors[iter].flow_y );
+		magnitude_squared = (vectors[i].flow_x * vectors[i].flow_x + vectors[i].flow_y * vectors[i].flow_y );
 		magnitude_root = sqrtf(magnitude_squared);
-			for (n=0; n<SEGMENT_AMOUNT; n++)
+			for (n=0; n<no_segments; n++)
 				{
-					if (( (vectors[iter].pos.x / OPTICFLOW_SUBPIXEL_FACTOR)>(n*segment_size + PAD_SORT) ) && ( (vectors[iter].pos.x / OPTICFLOW_SUBPIXEL_FACTOR) <= ((n+1)*segment_size + PAD_SORT) ) )
+					if (( (vectors[i].pos.x / OPTICFLOW_SUBPIXEL_FACTOR)>(n*segment_size + PAD_SORT) ) && ( (vectors[i].pos.x / OPTICFLOW_SUBPIXEL_FACTOR) <= ((n+1)*segment_size + PAD_SORT) ) )
 					{
 						magnitude_array[n] = (magnitude_array[n] + (magnitude_root));
 					}
@@ -360,13 +349,10 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	printf("\n\n");
 #endif
 
-	// Do flow based obstacle detection
+	/*DO OBSTACLE DETECTION AND CONTROL */
 
-	int i;
-	int fov = 2;
-
-	if(!OBS_DETECT){
-	for(i = SEGMENT_AMOUNT/2 - fov; i < SEGMENT_AMOUNT/2 + fov; i++){
+	// Check object
+	for(i = SEGMENT_AMOUNT/2 - 1 - fov; i < SEGMENT_AMOUNT/2 + fov; i++){
 		if (segmented_array[i] < DETECT_THRESHOLD){
 			if(i < SEGMENT_AMOUNT/2){
 				OBS_DETECT = TRUE;
@@ -377,13 +363,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 			}
 		}
 	}
-	}
-
-	printf("OBS_DETECT: %d, OBS_HEADING %f \n",OBS_DETECT,OBS_HEADING);
-
-
 #if PERIODIC_TELEMETRY
-	memcpy(&(result->flows),&segmented_array, sizeof(float[SEGMENT_AMOUNT]));
+	result->flows = segmented_array;
 	result->obs_detect = OBS_DETECT;
 	result->obs_heading = OBS_HEADING;
 #endif
@@ -472,7 +453,6 @@ static int sort_on_x(const void *a, const void *b)
 	const struct flow_t *b_p = (const struct flow_t *)b;
 	return (a_p->pos.x ) - (b_p->pos.x) ;
 }
-
 
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime)
 {

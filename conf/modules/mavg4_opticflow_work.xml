@@ -11,7 +11,7 @@
     <configure name="BEBOP_FRONT_CAMERA_PORT_OUT" value="5000" description="Port (default: 5000)"/>
     <configure name="BEBOP_FRONT_CAMERA_BROADCAST" value="FALSE|TRUE" description="Enable broadcast of image stream (default: TRUE)"/>
 
-    <!-- Optical flow calculation parameters -->
+    <!-- Optical flow calculation parameters THIS DOES NOT DO ANYTHING ONLY UNDERSTAND DESCRIPTION-->
     <section name="OPTICFLOW" prefix="OPTICFLOW_">
       <!-- Video device parameters -->
       <define name="DEVICE" value="/dev/video1" description="The V4L2 camera device that is used for the calculations"/>
@@ -31,7 +31,7 @@
       <define name="THRESHOLD_VEC" value="2" description="TThreshold in subpixels when the iterations of Lucas Kanade should stop"/>
 
       <!-- FAST9 corner detection parameters -->
-      <define name="FAST9_ADAPTIVE" value="TRUE" description="Whether we should use and adapative FAST9 crner detection threshold"/>
+      <define name="FAST9_ADAPTIVE" value="FALSE" description="Whether we should use and adapative FAST9 crner detection threshold"/>
       <define name="FAST9_THRESHOLD" value="20" description="FAST9 default threshold"/>
       <define name="FAST9_MIN_DISTANCE" value="10" description="The amount of pixels between corners that should be detected"/>
     </section>
@@ -59,6 +59,7 @@
       </dl_settings>
 
       <dl_settings name="Detection_M">
+        <dl_setting var="ERROR_THRESHOLD" min="0" step="0.01" max="10" shortname="imgerr_thres" />
         <dl_setting var="DETECT_THRESHOLD" min="0" step="0.01" max="10" shortname="detect_thres" />
         <dl_setting var="OBS_HEADING_SET" min="0" step="1" max="180" shortname="heading_set" />
       </dl_settings>
