@@ -50,12 +50,18 @@
 
 /* Debugging */
 #define PERIODIC_TELEMETRY TRUE
-#define OPTICFLOW_DEBUG TRUE
+#define OPTICFLOW_DEBUG FALSE
 #define VIDEO_SIZE OPTICFLOW_PROCESS_SIZE				// 272,272
 #define VIDEO_THREAD_SHOT_PATH "/data/ftp/internal_000/images"
 
+
+
+
+
 /* ### Global data used for obstacle avoidance ### */
-float DETECT_THRESHOLD = 0.01;							// (float) | Threshold for depth
+uint8_t TRANS_MOVE = TRUE;							// (bool) | Set to false when not translating to avoidance false positive
+
+float DETECT_THRESHOLD = 100;							// (float) | Threshold for depth reciprocal
 float OBS_HEADING_SET = 60.0;						// (float) | Heading change on detection
 
 uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
@@ -63,7 +69,10 @@ float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
 
 uint8_t ERROR_COUNT = 0;							// (int) | Image Error counter
 float ERROR_THRESHOLD = 0.0;							// (float) | Image Error threshold
-float ERROR_ADD = 0.0;								// (uint32) | Image Error addition image difference
+float ERROR_ADD = 0.0;								// (float) | Image Error addition image difference
+float ERROR_AVG = 0.0;								// (float) | Average image error over 4 images
+
+
 
 /* ### Storage variables ### */
 
@@ -80,7 +89,6 @@ static struct v4l2_device *opticflow_dev;			// The opticflow camera V4L2 device
 static pthread_t opticflow_calc_thread;            	// The optical flow calculation thread
 
 static pthread_mutex_t opticflow_mutex;            	// Mutex lock for thread safety
-
 
 
 /* ### Functions ### */
@@ -106,7 +114,7 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
   pthread_mutex_lock(&opticflow_mutex);
   pprz_msg_send_OFG(trans, dev, AC_ID,
                                &opticflow_result.fps, &opticflow_result.corner_cnt,
-                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows,
+                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows, &ERROR_AVG,
 							   &opticflow_result.obs_detect, &opticflow_result.obs_heading);
   pthread_mutex_unlock(&opticflow_mutex);
 }
@@ -154,8 +162,6 @@ void opticflow_module_init(void){
 }
 
 
-
-
 /****************************************************************
  * OPTICAL FLOW THREAD
  ****************************************************************/
@@ -199,8 +205,9 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 
 		/* Do optical flow calculations */
 
-		//Calculate on frame
+		//Calculate on frame only when translating, not when doing other movements.
 
+		if(TRANS_MOVE){
 		struct opticflow_result_t temp_result;
 		opticflow_calc_frame(&opticflow, &img, &temp_result);
 
@@ -208,7 +215,7 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 		pthread_mutex_lock(&opticflow_mutex);
 		memcpy(&opticflow_result, &temp_result, sizeof(struct opticflow_result_t));
 		pthread_mutex_unlock(&opticflow_mutex);
-
+		}
 
 		#if OPTICFLOW_DEBUG
 			//video_thread_save_shot(&img, &img_jpeg, counter);
@@ -233,16 +240,18 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 	#endif
 }
 
+
+
+/****************************************************************
+ * OPTICAL FLOW FUNCTION
+ ****************************************************************/
+
 /**
  * Run the optical flow on a new image frame
  * @param[in] *opticflow The opticalflow structure that keeps track of previous images
  * @param[in] *img The image frame to calculate the optical flow from
  * @param[out] *result The optical flow result
  */
-
-/****************************************************************
- * OPTICAL FLOW FUNCTION
- ****************************************************************/
 
 void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 									struct opticflow_result_t *result){
@@ -262,7 +271,10 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		opticflowin->got_first_img = TRUE;
 	}
 
-	// FAST corner detection
+	/*************************
+	* FAST CORNER
+	**************************/
+
 	struct point_t *corners = fast9_detect(img, opticflowin->fast9_threshold, opticflowin->fast9_min_distance,
 											OPTICFLOW_PADDING, &result->corner_cnt);
 
@@ -276,12 +288,16 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		}
 	}
 
-	// FAST Check if corners were detected
+	// FAST Check if corners were detected, if not then continue with no optic flow calculations
 	if (result->corner_cnt < 1){
 		free(corners);
 		//image_copy(&opticflowin->img_gray, &opticflowin->prev_img_gray);
 		//return;
 	} else {
+
+		/*************************
+		* ## OPTICAL FLOW LUCAS KANADE
+		**************************/
 
 		// LUCAS-KANADE optical flow
 		result->tracked_cnt = result->corner_cnt; 		// Sets tracked number of corners to corners detected by FAST
@@ -290,12 +306,14 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 				opticflowin->window_size / 2, opticflowin->subpixel_factor, opticflowin->max_iterations,
 				opticflowin->threshold_vec, opticflowin->max_track_corners);
 
-	#if OPTICFLOW_DEBUG
+#if OPTICFLOW_DEBUG
 		//image_show_points(img, corners, result->corner_cnt);
 		image_show_flow(img, vectors, result->tracked_cnt, opticflowin->subpixel_factor);
-	#endif
+#endif
 
-		/* DO FLOW BASED AVOIDANCE */
+		/*************************
+		* ## FLOW BASED DETECTION
+		**************************/
 
 		// Build segmented array
 		int n;
@@ -327,12 +345,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 			segmented_array[n]= (1/magnitude_array[n]);
 		}*/
 
-	#if OPTICFLOW_DEBUG
+#if OPTICFLOW_DEBUG
 		for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
 			{
 				printf("x: %d depth rec: %f \n",iter+1, segmented_array[iter]);
 			}
-	#endif
+#endif
 
 		// Do flow based obstacle detection
 		int i;
@@ -355,17 +373,21 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		free(corners);
 		free(vectors);
 #if PERIODIC_TELEMETRY
-		memcpy(&(result->flows),&magnitude_array, sizeof(float[SEGMENT_AMOUNT]));
+		memcpy(&(result->flows),&segmented_array, sizeof(float[SEGMENT_AMOUNT]));
 #endif
 	} // END FAST Check if corners were detected
 
-	/* DO IMAGE DIFFERENCE AVOIDANCE */
+
+	/*************************
+	* ## IMAGE DIFFERENCE BASED DETECTION 
+	**************************/
+
 	if(!OBS_DETECT){
 		if(ERROR_COUNT == 4){
 			ERROR_COUNT = 0;
-			ERROR_ADD = ERROR_ADD/4;
-			printf("ERROR_ADD: %f \n", ERROR_ADD);
-			if(ERROR_ADD <= ERROR_THRESHOLD){
+			ERROR_AVG = ERROR_ADD/4;
+			printf("ERROR_AVG: %f \n", ERROR_ADD);
+			if(ERROR_AVG <= ERROR_THRESHOLD){
 				OBS_DETECT = TRUE;
 				OBS_HEADING = OBS_HEADING_SET;
 			}
@@ -373,9 +395,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		} else {
 			ERROR_COUNT++;
 		}
-		ERROR_ADD += image_1to1diff(&opticflowin->img_gray, &opticflowin->prev_img_gray, NULL);
+		ERROR_ADD += image_1to1diff(&opticflowin->img_gray, &opticflowin->prev_img_gray, NULL, 111, 111);
 	};
 
+	/*************************
+	* PRINT AND EXTRAS 
+	**************************/
 
 	printf("OBS_DETECT: %d, OBS_HEADING %f \n",OBS_DETECT,OBS_HEADING);
 	printf("\n\n");
@@ -385,14 +410,9 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	result->obs_heading = OBS_HEADING;
 #endif
 
-
 	/* NEXT LOOP */
 	image_switch(&opticflowin->img_gray, &opticflowin->prev_img_gray);
 }
-
-
-
-
 
 
 /****************************************************************

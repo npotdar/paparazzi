@@ -38,6 +38,8 @@ struct opticflow_result_t {
 extern struct opticflow_t opticflow;
 
 // Require for obstacle detection
+extern uint8_t TRANS_MOVE;
+
 extern float DETECT_THRESHOLD;
 extern float OBS_HEADING_SET;
 
