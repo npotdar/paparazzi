@@ -46,7 +46,7 @@ extern float OBS_HEADING_SET;
 extern uint8_t OBS_DETECT;
 extern float OBS_HEADING;
 
-float ERROR_THRESHOLD;
+extern float IMGERROR_THRESHOLD;
 
 // Module functions
 extern void opticflow_module_init(void);

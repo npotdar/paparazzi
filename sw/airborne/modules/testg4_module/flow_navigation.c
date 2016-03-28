@@ -1,5 +1,5 @@
 #include "modules/testg4_module/flow_navigation.h"
-#include "object_input.h"
+//#include "object_input.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "subsystems/navigation/waypoints.h"
 #include "modules/computer_vision/mavg4_opticflow.h"
@@ -33,7 +33,7 @@ struct Line lines[4];
 //	return objectdet;
 //}
 
-struct Line constructLine(uint8_t wp_1,uint8_t wp_2){
+static struct Line constructLine(uint8_t wp_1,uint8_t wp_2){
 	struct Line line;
 	float p1x = waypoint_get_x(wp_1);
 	float p1y = waypoint_get_y(wp_1);
@@ -52,7 +52,7 @@ void flow_navigation_init() {
 
 
 
-float absol(float in){
+static float absol(float in){
 	if (in>0){
 		return in;
 	}
@@ -61,7 +61,7 @@ float absol(float in){
 	}
 }
 
-float capFun(float in, float upBound, float lowBound){
+static float capFun(float in, float upBound, float lowBound){
 	if(in>upBound){
 		return upBound;
 	}
@@ -77,7 +77,7 @@ float capFun(float in, float upBound, float lowBound){
 /**
  * Increases the NAV heading. Assumes heading is an INT32_ANGLE. It is bound in this function.
  */
-uint8_t changeHeading()
+uint8_t changeHeading(void)
 {
 	printf("nav heading before is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
 	nav_set_heading_deg(ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180+90);
@@ -130,7 +130,7 @@ uint8_t chooseRandomIncrementAvoidance(){
 	return FALSE;
 }
 
-void checkDistance(){
+void checkDistance(void){
 	//printf("obs det is %i\n",OBS_DETECT);
 	struct EnuCoor_f *pos = stateGetPositionEnu_f(); // Get your current position
 	float xself = pos->x;
@@ -156,7 +156,7 @@ void checkDistance(){
  * Compute the distance between yourself (coordinates xself,yself) and a line given by y=ax+b
  */
 
-uint8_t distToLine(){
+uint8_t distToLine(void){
 
 	//struct EnuCoor_f *speed = stateGetSpeedEnu_f();
 	//printf("speed x,y,z = %f,%f,%f\n",speed->x,speed->y,speed->z);
@@ -235,11 +235,11 @@ uint8_t distToLine(){
 	return FALSE;
 }
 
-uint8_t minDistanceExceed(){
+uint8_t minDistanceExceed(void){
 	return mindistance<distthresh;
 }
 
-uint8_t minDistancePass(){
+uint8_t minDistancePass(void){
 	return mindistance<(1.1*distthresh);
 }
 

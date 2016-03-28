@@ -68,7 +68,7 @@ uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
 float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
 
 uint8_t ERROR_COUNT = 0;							// (int) | Image Error counter
-float ERROR_THRESHOLD = 0.0;							// (float) | Image Error threshold
+float IMGERROR_THRESHOLD = 0.0;							// (float) | Image Error threshold
 float ERROR_ADD = 0.0;								// (float) | Image Error addition image difference
 float ERROR_AVG = 0.0;								// (float) | Average image error over 4 images
 
@@ -96,7 +96,7 @@ static void *opticflow_module_calc(void *data);		// Main optical flow calculatio
 static int sort_on_x(const void *a, const void *b);
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime);		// Calculation of timedifference for FPS
 //static int cmp_flow(const void *a, const void *b);
-static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number);
+//static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number);
 
 void opticflow_module_run(void){};					// Dummy function
 
@@ -183,7 +183,6 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 
 	// Create the images for streaming purposes only!
 	#if OPTICFLOW_DEBUG
-
 	struct image_t img_jpeg;
 	image_create(&img_jpeg, VIDEO_SIZE, IMAGE_JPEG);
 	udp_socket_create(&video_sock, STRINGIFY(BEBOP_FRONT_CAMERA_HOST), 5000, -1, TRUE);
@@ -306,10 +305,10 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 				opticflowin->window_size / 2, opticflowin->subpixel_factor, opticflowin->max_iterations,
 				opticflowin->threshold_vec, opticflowin->max_track_corners);
 
-#if OPTICFLOW_DEBUG
+		#if OPTICFLOW_DEBUG
 		//image_show_points(img, corners, result->corner_cnt);
 		image_show_flow(img, vectors, result->tracked_cnt, opticflowin->subpixel_factor);
-#endif
+		#endif
 
 		/*************************
 		* ## FLOW BASED DETECTION
@@ -345,12 +344,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 			segmented_array[n]= (1/magnitude_array[n]);
 		}*/
 
-#if OPTICFLOW_DEBUG
+		#if OPTICFLOW_DEBUG
 		for(iter=0;iter < (sizeof (segmented_array) /sizeof (segmented_array[0])); iter++)
 			{
 				printf("x: %d depth rec: %f \n",iter+1, segmented_array[iter]);
 			}
-#endif
+		#endif
 
 		// Do flow based obstacle detection
 		int i;
@@ -372,9 +371,9 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 		free(corners);
 		free(vectors);
-#if PERIODIC_TELEMETRY
+		#if PERIODIC_TELEMETRY
 		memcpy(&(result->flows),&segmented_array, sizeof(float[SEGMENT_AMOUNT]));
-#endif
+		#endif
 	} // END FAST Check if corners were detected
 
 
@@ -387,7 +386,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 			ERROR_COUNT = 0;
 			ERROR_AVG = ERROR_ADD/4;
 			printf("ERROR_AVG: %f \n", ERROR_ADD);
-			if(ERROR_AVG <= ERROR_THRESHOLD){
+			if(ERROR_AVG <= IMGERROR_THRESHOLD){
 				OBS_DETECT = TRUE;
 				OBS_HEADING = OBS_HEADING_SET;
 			}
@@ -405,10 +404,10 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	printf("OBS_DETECT: %d, OBS_HEADING %f \n",OBS_DETECT,OBS_HEADING);
 	printf("\n\n");
 
-#if PERIODIC_TELEMETRY
+	#if PERIODIC_TELEMETRY
 	result->obs_detect = OBS_DETECT;
 	result->obs_heading = OBS_HEADING;
-#endif
+	#endif
 
 	/* NEXT LOOP */
 	image_switch(&opticflowin->img_gray, &opticflowin->prev_img_gray);
@@ -497,6 +496,7 @@ static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishti
   return msec;
 }
 
+/*
 static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number)
 {
 
@@ -518,10 +518,10 @@ static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg
         fwrite(img_jpeg->buf, sizeof(uint8_t), img_jpeg->buf_size, fp);
         fclose(fp);
       }
-//#endif
 
       // We don't need to seek for a next index anymore
       break;
     }
   }
 }
+*/
