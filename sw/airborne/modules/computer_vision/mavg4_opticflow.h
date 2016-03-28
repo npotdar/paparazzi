@@ -2,7 +2,6 @@
 #define MAVG4_OPTICFLOW_H
 
 #include "std.h"
-//#include "opticflow/inter_thread_data.h"
 #include "lib/vision/image.h"
 #include "lib/v4l/v4l2.h"
 
@@ -53,7 +52,7 @@ extern void opticflow_module_init(void);
 extern void opticflow_module_run(void);
 extern void opticflow_module_start(void);
 extern void opticflow_module_stop(void);
-extern void opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img, struct opticflow_result_t *result);
+void opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img, struct opticflow_result_t *result);
 extern float obs_heading(void);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Optical flow calculations for the Bebop
+ * Optical flow calculations and avoidance for the Bebop
  *
  */
 #include "mavg4_opticflow.h"
@@ -26,8 +26,6 @@
 /* ### Defaults defined for bebop ### */
 #define OPTICFLOW_DEVICE /dev/video1				// Path to video device
 #define OPTICFLOW_DEVICE_SIZE 1408,2112				// (int) width [px], (int) height [px] | Video device resolution
-
-/* Video device buffers */
 #define OPTICFLOW_DEVICE_BUFFERS 15		// (int) | Video device V4L2 buffers default: 15
 
 /* ### Defaults defined for opticalflow SEE .H FILE! ###*/
@@ -43,19 +41,16 @@
 /* Optical flow and processing variables */
 #define OPTICFLOW_PADDING 50,70	// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
 #define PAD_SORT 50
-#define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 544, 544
+#define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 272,272
 #define OPTICFLOW_SORT 272
 
 #define SEGMENT_AMOUNT 5						// (int) segments | Number of semgnets to make
 
 /* Debugging */
 #define PERIODIC_TELEMETRY TRUE
-#define OPTICFLOW_DEBUG FALSE
+#define OPTICFLOW_DEBUG TRUE
 #define VIDEO_SIZE OPTICFLOW_PROCESS_SIZE				// 272,272
 #define VIDEO_THREAD_SHOT_PATH "/data/ftp/internal_000/images"
-
-
-
 
 
 /* ### Global data used for obstacle avoidance ### */
@@ -73,33 +68,28 @@ float ERROR_ADD = 0.0;								// (float) | Image Error addition image difference
 float ERROR_AVG = 0.0;								// (float) | Average image error over 4 images
 
 
-
 /* ### Storage variables ### */
 
 #if OPTICFLOW_DEBUG
 	  struct UdpSocket video_sock;
 	  //struct image_t img_jpeg;
 #endif
-
 struct opticflow_t opticflow;						// Opticflow calculations
 static struct opticflow_result_t opticflow_result;	// Opticflow results
 static struct v4l2_device *opticflow_dev;			// The opticflow camera V4L2 device
 
 /* Threads and mutexes*/
 static pthread_t opticflow_calc_thread;            	// The optical flow calculation thread
-
 static pthread_mutex_t opticflow_mutex;            	// Mutex lock for thread safety
 
 
 /* ### Functions ### */
 static void *opticflow_module_calc(void *data);		// Main optical flow calculation thread
-static int sort_on_x(const void *a, const void *b);
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime);		// Calculation of timedifference for FPS
+//static int sort_on_x(const void *a, const void *b);
 //static int cmp_flow(const void *a, const void *b);
 //static void video_thread_save_shot(struct image_t *img, struct image_t *img_jpeg, int shot_number);
-
 void opticflow_module_run(void){};					// Dummy function
-
 
 
 #if PERIODIC_TELEMETRY
@@ -137,7 +127,6 @@ void opticflow_module_init(void){
 	image_create(&opticflowp->img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
 	image_create(&opticflowp->prev_img_gray, OPTICFLOW_PROCESS_SIZE, IMAGE_GRAYSCALE);
 
-	//
 	//Set the previous values
 	opticflowp->got_first_img = FALSE;
 
@@ -152,7 +141,6 @@ void opticflow_module_init(void){
 	opticflowp->fast9_threshold = OPTICFLOW_FAST9_THRESHOLD;
 	opticflowp->fast9_min_distance = OPTICFLOW_FAST9_MIN_DISTANCE;
 
-	/* Initialise video device settings */
 	// Initialise the main video device
 	opticflow_dev = v4l2_init("/dev/video1", OPTICFLOW_DEVICE_SIZE, OPTICFLOW_DEVICE_BUFFERS, V4L2_PIX_FMT_SGBRG10);
 
@@ -174,7 +162,6 @@ void opticflow_module_init(void){
  */
 
 void *opticflow_module_calc(void *data __attribute__((unused))){
-
 	// Start the straming on the V4L2 device
 	if (!v4l2_start_capture(opticflow_dev)) {
 	    printf("[opticflow_module] Could not start capture of the camera\n");
@@ -188,24 +175,17 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 	udp_socket_create(&video_sock, STRINGIFY(BEBOP_FRONT_CAMERA_HOST), 5000, -1, TRUE);
 	#endif
 
+	struct image_t img_dev;
 	struct image_t img;
 	image_create(&img, OPTICFLOW_PROCESS_SIZE, IMAGE_YUV422);
 
-	struct image_t img_dev;
-
 	/* Main loop of the optic flow calculation	 */
-	//int counter = 0;
 	while(TRUE){
-		/* Define image */
-
-		// Get image from v4l2 with native size
+		/* Define image - Get image from v4l2 with native size*/
 		v4l2_image_get(opticflow_dev, &img_dev);
 		BayerToYUV(&img_dev, &img, 0, 0);
 
-		/* Do optical flow calculations */
-
-		//Calculate on frame only when translating, not when doing other movements.
-
+		/* Do optical flow calculations - Calculate on frame only when translating, not when doing other movements. */
 		if(TRANS_MOVE){
 		struct opticflow_result_t temp_result;
 		opticflow_calc_frame(&opticflow, &img, &temp_result);
@@ -231,11 +211,10 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 
 		/* Free image */
 		v4l2_image_free(opticflow_dev, &img_dev);
-		//counter++;
 	}
 	image_free(&img_dev);
 	#if OPTICFLOW_DEBUG
-	  image_free(&img_jpeg);
+	image_free(&img_jpeg);
 	#endif
 }
 
@@ -315,8 +294,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		**************************/
 
 		// Build segmented array
-		int n;
-		int iter;
+		uint8_t n;
+		uint8_t iter;
 		int magnitude_squared;
 		float magnitude_root;
 
@@ -352,8 +331,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		#endif
 
 		// Do flow based obstacle detection
-		int i;
-		int fov = 2;
+		uint8_t i;
+		uint8_t fov = 2;
 
 		if(!OBS_DETECT){
 		for(i = SEGMENT_AMOUNT/2 - fov; i <= SEGMENT_AMOUNT/2 + fov; i++){
@@ -441,13 +420,12 @@ void opticflow_module_start(void){
  */
 void opticflow_module_stop(void)
 {
+   // Cancel the opticalflow calculation thread
+	if(pthread_cancel(opticflow_calc_thread)!=0){
+		  printf("Thread killing did not work\n");
+	  }
   // Stop the capturing
   v4l2_stop_capture(opticflow_dev);
-
-  // Cancel the opticalflow calculation thread
-  if(pthread_cancel(opticflow_calc_thread)!=0){
-	  printf("Thread killing did not work\n");
-  }
 }
 
 /****************************************************************
@@ -473,20 +451,14 @@ float obs_heading(){
  * EXTRA FUNCTIONS
  ****************************************************************/
 
-/**
- * Calculate the difference from start till finish
- * @param[in] *starttime The start time to calculate the difference from
- * @param[in] *finishtime The finish time to calculate the difference from
- * @return The difference in milliseconds
- */
-
+/*
 static int sort_on_x(const void *a, const void *b)
 {
 	const struct flow_t *a_p = (const struct flow_t *)a;
 	const struct flow_t *b_p = (const struct flow_t *)b;
 	return (a_p->pos.x ) - (b_p->pos.x) ;
 }
-
+*/
 
 static uint32_t timeval_diff(struct timeval *starttime, struct timeval *finishtime)
 {

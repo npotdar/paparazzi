@@ -37,16 +37,16 @@
     </section>
 
     <section name="DEBUGGER">
+      <define name="OPTICFLOW_DEBUG" value="TRUE" description="Debug opticflow outputs RTP stream and other messages" />
       <define name="PERIODIC_TELEMETRY" value="TRUE" description="Send periodic telemetry of opticflow calculations" />
     </section>
-    
   </doc>
 
   <settings>
-	<dl_settings NAME="Vision stabilization">
+	<dl_settings NAME="Vision Avoidance">
 
       <!-- Optical flow calculations parameters for Lucas Kanade and FAST9 -->
-      <dl_settings name="Opticflow_M">
+      <dl_settings name="Opticflow">
         <dl_setting var="opticflow.max_track_corners" module="computer_vision/mavg4_opticflow" min="1" step="1" max="100" shortname="max_trck_corners" param="OPTICFLOW_MAX_TRACK_CORNERS"/>
         <dl_setting var="opticflow.window_size" module="computer_vision/mavg4_opticflow" min="0" step="1" max="500" shortname="window_size" param="OPTICFLOW_WINDOW_SIZE"/>
         <dl_setting var="opticflow.subpixel_factor" module="computer_vision/mavg4_opticflow" min="0" step="1" max="100" shortname="subpixel_factor" param="OPTICFLOW_SUBPIXEL_FACTOR"/>
@@ -58,10 +58,12 @@
         <dl_setting var="opticflow.fast9_min_distance" module="computer_vision/mavg4_opticflow" min="0" step="1" max="300" shortname="fast9_min_distance" param="OPTICFLOW_FAST9_MIN_DISTANCE"/>
       </dl_settings>
 
-      <dl_settings name="Detection_M">
+      <!-- Detection based on vision -->
+      <dl_settings name="Detection">
         <dl_setting var="IMGERROR_THRESHOLD" min="0" step="100" max="1000000" shortname="imgerr_thres" />
         <dl_setting var="DETECT_THRESHOLD" min="0" step="10" max="10000" shortname="detect_thres" />
-        <dl_setting var="OBS_HEADING_SET" min="0" step="1" max="180" shortname="heading_set" />
+        <dl_setting var="OBS_HEADING_SET" min="-180" step="1" max="180" shortname="heading_set" />
+        <dl_setting var="OBS_HEADING" min="-180" step="1" max="180"  shortname="heading_cur" />
         <dl_setting var="OBS_DETECT" min="0" step="1" max="1" values="FALSE|TRUE" shortname="obs_detect" />
         <dl_setting var="TRANS_MOVE" min="0" step="1" max="1" values="FALSE|TRUE" shortname="trans_move" />
       </dl_settings>
@@ -76,7 +78,7 @@
   <init fun="opticflow_module_init()"/>
   <periodic fun="opticflow_module_run()" start="opticflow_module_start()" stop="opticflow_module_stop()" autorun="TRUE"/>
 
-  <makefile>
+  <makefile target="ap">
     <!-- Include the needed Computer Vision files -->
     <define name="modules/computer_vision" type="include"/>
     <file name="image.c" dir="modules/computer_vision/lib/vision"/>
@@ -111,6 +113,8 @@
     </raw>
 
   </makefile>
-
+  <makefile target="nps">
+     <file name="mavg4_opticflow_nps.c"/>
+ </makefile> 
 </module>
 

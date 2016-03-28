@@ -22,7 +22,6 @@
     <waypoint lat="51.9905922" lon="4.3767779" name="_OZ2"/>
     <waypoint lat="51.9906271" lon="4.3768621" name="_OZ3"/>
     <waypoint lat="51.9906780" lon="4.3768044" name="_OZ4"/>
-
   </waypoints>
   <sectors>
     <sector color="red" name="CyberZoo">
@@ -66,11 +65,13 @@
       <call fun="NavSetWaypointHere(WP_CLIMB)"/>
       <stay climb="nav_climb_vspeed" vmode="climb" wp="CLIMB"/>
     </block>
-	<!-- TAKEOFF SEQUENCES UPTO HERE -->
     <block name="stay_home">
       <!--call fun="NavSetWaypointHere(WP_HOME)"/>-->
       <stay wp="HOME"/>
     </block>
+    <!-- TAKEOFF SEQUENCES UPTO HERE -->
+
+    
     <block key="s" name="Standby" strip_button="Standby" strip_icon="home.png">
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <stay wp="STDBY"/>
@@ -123,6 +124,8 @@
     	<stay wp="STDBY"/>	
     	<exception cond="block_time > 2" deroute="StayGoal"/>
     </block>
+
+
     <!-- LANDING SEQUENCES FROM HERE -->
     <block name="landhere" strip_button="Land Here" strip_icon="land-right.png" key="l">
       <call fun="NavSetWaypointHere(WP_TD)"/>
