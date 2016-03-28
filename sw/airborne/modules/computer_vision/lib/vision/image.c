@@ -632,7 +632,7 @@ uint32_t image_1to1diff(struct image_t *img_a, struct image_t *img_b, struct ima
 
   // Go trough the imagge pixels and calculate the difference
   for (uint16_t x = 0 + pad_x; x < (img_b->w - pad_x); x++) {
-    for (uint16_t y = 0; y < img_b->h; y++) {
+    for (uint16_t y = 0 + pad_y; y < (img_b->h - pad_y); y++) {
       int16_t diff_c = img_a_buf[(y) * img_a->w + (x)] - img_b_buf[y * img_b->w + x];
       sum_diff2 += diff_c * diff_c;
 

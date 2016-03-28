@@ -66,6 +66,7 @@
       <call fun="NavSetWaypointHere(WP_CLIMB)"/>
       <stay climb="nav_climb_vspeed" vmode="climb" wp="CLIMB"/>
     </block>
+	<!-- TAKEOFF SEQUENCES UPTO HERE -->
     <block name="stay_home">
       <!--call fun="NavSetWaypointHere(WP_HOME)"/>-->
       <stay wp="HOME"/>
