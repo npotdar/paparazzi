@@ -2,6 +2,7 @@
 #include "object_input.h"
 #include "firmwares/rotorcraft/navigation.h"
 #include "subsystems/navigation/waypoints.h"
+#include "modules/computer_vision/mavg4_opticflow.h"
 #include "state.h"
 #include <stdlib.h>
 #include <math.h>
@@ -12,11 +13,7 @@ float incrx = 0.0;
 float incry = 0.8;
 float distthresh = 1.4;
 float wallscale = 10;
-//float objectscale = -0.01745;
 float pidiv180 = 0.01745;
-//float objectdet = 0;
-float Vx = 0;
-float Vy = 1;
 float yxratio = 1;
 float mindistance=10;
 uint8_t wp_target;
@@ -134,6 +131,7 @@ uint8_t chooseRandomIncrementAvoidance(){
 }
 
 void checkDistance(){
+	//printf("obs det is %i\n",OBS_DETECT);
 	struct EnuCoor_f *pos = stateGetPositionEnu_f(); // Get your current position
 	float xself = pos->x;
 	float yself = pos->y;
@@ -232,7 +230,7 @@ uint8_t distToLine(){
 	waypoint_set_xy_i(wp_target,POS_BFP_OF_REAL(wayx),POS_BFP_OF_REAL(wayy));
 	//bool_t temp = nav_set_heading_towards_waypoint(ANGLE_FLOAT_OF_BFP(wp_heading));
 	//printf("heading is: %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/-objectscale);
-	bool_t temp = nav_set_heading_towards_waypoint(wp_heading);
+	nav_set_heading_towards_waypoint(wp_heading);
 	//printf("heading is: %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/-objectscale);
 	return FALSE;
 }

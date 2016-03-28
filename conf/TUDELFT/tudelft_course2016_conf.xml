@@ -57,12 +57,12 @@
   <aircraft
    name="test_Steven"
    ac_id="188"
-   airframe="airframes/MAVG4/test_Steven_airframe.xml"
+   airframe="airframes/MAVG4/bebop_af_competition.xml"
    radio="radios/dummy.xml"
    telemetry="telemetry/default_rotorcraft.xml"
-   flight_plan="flight_plans/MAVG4/test_Steven_flightplan.xml"
+   flight_plan="flight_plans/MAVG4/bebop_competition.xml"
    settings="settings/rotorcraft_basic.xml settings/control/rotorcraft_guidance.xml settings/control/stabilization_rate.xml ../conf/modules/cv_colorfilter.xml"
-   settings_modules="modules/geo_mag.xml modules/air_data.xml modules/flow_navigation.xml"
+   settings_modules="modules/geo_mag.xml modules/air_data.xml modules/mavg4_opticflow_work.xml modules/flow_navigation.xml"
    gui_color="#db67fffffaeb"
   />
 </conf>

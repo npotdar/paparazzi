@@ -18,7 +18,7 @@
     <file name="flow_navigation.h"/>
   </header>
   <init fun="flow_navigation_init()"/>
-  <periodic fun="checkDistance()" freq="3"/>
+  <periodic fun="checkDistance()" freq="10"/>
   <makefile>
     <file name="flow_navigation.c"/>
   </makefile>
