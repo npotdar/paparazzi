@@ -1,6 +1,6 @@
 <!DOCTYPE flight_plan SYSTEM "../flight_plan.dtd">
 
-<flight_plan alt="1.5" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="20" name="Rotorcraft Optitrack (Delft)" security_height="0.3">
+<flight_plan alt="1.4" ground_alt="0" lat0="51.990634" lon0="4.376789" max_dist_from_home="20" name="Opticflow Avoidance" security_height="0.3">
   <header>
 #include "autopilot.h"
 #include "subsystems/ahrs.h"
@@ -53,15 +53,16 @@
       <call fun="NavKillThrottle()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
-    <block name="Start Engine">
+    <block name="Start Engine" key="s">
       <call fun="NavResurrect()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
-    <block name="Takeoff" strip_button="Takeoff" strip_icon="takeoff.png">
+    <block name="Takeoff" strip_button="Takeoff" strip_icon="takeoff.png" key="t">
       <exception cond="stateGetPositionEnu_f()->z > 1.0" deroute="Standby"/>
       <call fun="NavSetWaypointHere(WP_CLIMB)"/>
       <stay climb="nav_climb_vspeed" vmode="climb" wp="CLIMB"/>
     </block>
+     <!-- TAKEOFF SEQUENCES UP TO HERE-->
     <block name="Standby" strip_button="Standby" strip_icon="home.png">
       <stay wp="STDBY"/>
     </block>
@@ -71,7 +72,8 @@
     <block name="StayGoal">
       <stay wp="GOAL"/>
     </block>
-    <block name="landhere" strip_button="Land Here" strip_icon="land-right.png">
+    <!-- LANDING SEQUENCES FROM HERE -->
+    <block name="landhere" strip_button="Land Here" strip_icon="land-right.png" key="l">
       <call fun="NavSetWaypointHere(WP_TD)"/>
     </block>
     <block name="land">
@@ -83,7 +85,7 @@
       <call fun="NavStartDetectGround()"/>
       <stay climb="nav_descend_vspeed" vmode="climb" wp="TD"/>
     </block>
-    <block name="landed">
+    <block name="landed" key="k">
       <call fun="NavKillThrottle()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
