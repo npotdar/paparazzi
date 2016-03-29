@@ -79,11 +79,9 @@ static float capFun(float in, float upBound, float lowBound){
  */
 uint8_t changeHeading(void)
 {
-	float headingch = obs_heading();
-	printf("obs_heading is: %f\n",headingch);
-	//printf("nav heading before is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
-	nav_set_heading_deg(ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180+headingch);
-	//printf("nav heading after is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
+	printf("nav heading before is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
+	nav_set_heading_deg(ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180+90);
+	printf("nav heading after is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
   //nav_heading = nav_heading + objectdet;
   // Check if your turn made it go out of bounds...
   //INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
@@ -134,7 +132,6 @@ uint8_t chooseRandomIncrementAvoidance(){
 
 void checkDistance(void){
 	printf("obs det is %u\n",OBS_DETECT);
-	printf("obs head is %f\n",OBS_HEADING);
 	struct EnuCoor_f *pos = stateGetPositionEnu_f(); // Get your current position
 	float xself = pos->x;
 	float yself = pos->y;

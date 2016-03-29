@@ -78,7 +78,7 @@
   <init fun="opticflow_module_init()"/>
   <periodic fun="opticflow_module_run()" start="opticflow_module_start()" stop="opticflow_module_stop()" autorun="TRUE"/>
 
-  <makefile target="ap">
+  <makefile target="nps">
     <!-- Include the needed Computer Vision files -->
     <define name="modules/computer_vision" type="include"/>
     <file name="image.c" dir="modules/computer_vision/lib/vision"/>
@@ -113,7 +113,7 @@
     </raw>
 
   </makefile>
-  <makefile target="nps">
+  <makefile target="ap">
      <file name="mavg4_opticflow_nps.c"/>
  </makefile> 
 </module>

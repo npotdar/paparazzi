@@ -440,8 +440,11 @@ float obs_heading(){
 		OBS_DETECT = FALSE;
 		heading_change = OBS_HEADING;
 		OBS_HEADING = 0;
+		printf("heading change in block is %f\n",heading_change);
+		//return heading_change;
 		return heading_change;
 	} else {
+		printf("wrong block");
 		return 0;
 	}
 }

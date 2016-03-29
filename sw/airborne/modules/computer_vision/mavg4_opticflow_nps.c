@@ -36,7 +36,7 @@ float DETECT_THRESHOLD = 100;							// (float) | Threshold for depth reciprocal
 float OBS_HEADING_SET = 60.0;						// (float) | Heading change on detection
 
 uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
-float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
+float OBS_HEADING = 60;								// (float) | Obstacle heaing change
 
 uint8_t ERROR_COUNT = 0;							// (int) | Image Error counter
 float IMGERROR_THRESHOLD = 0.0;							// (float) | Image Error threshold
@@ -105,8 +105,11 @@ float obs_heading(){
 		OBS_DETECT = FALSE;
 		heading_change = OBS_HEADING;
 		OBS_HEADING = 0;
+		printf("heading change in block is %f\n",heading_change);
+		//return heading_change;
 		return heading_change;
 	} else {
+		printf("wrong block");
 		return 0;
 	}
 }

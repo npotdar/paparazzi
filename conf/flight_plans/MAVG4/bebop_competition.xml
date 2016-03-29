@@ -40,9 +40,9 @@
 
   <exceptions>
     <!--Check inside small flight area, then goto Center(Standby) -->
-    <exception cond="!InsideCyberZoo(GetPosX(), GetPosY())" deroute="Standby"/>
-    <exception cond="!InsideObstacleZone(GetPosX(), GetPosY())" deroute="Standby"/>
-    <exception cond="objectDetected" deroute="change_heading"/>
+    <!--exception cond="!InsideCyberZoo(GetPosX(), GetPosY())" deroute="Standby"/>
+    <exception cond="!InsideObstacleZone(GetPosX(), GetPosY())" deroute="Standby"/>-->
+    <exception cond="OBS_DETECT" deroute="change_heading"/>
     <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="land"/>
     <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="landhere"/>
   </exceptions>
