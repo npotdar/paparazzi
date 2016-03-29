@@ -30,12 +30,12 @@
 
 /* ### Defaults defined for opticalflow SEE .H FILE! ###*/
 #define OPTICFLOW_MAX_TRACK_CORNERS 30
-#define OPTICFLOW_WINDOW_SIZE 20
+#define OPTICFLOW_WINDOW_SIZE 40 //20
 #define OPTICFLOW_SUBPIXEL_FACTOR 10
 #define OPTICFLOW_MAX_ITERATIONS 10
 #define OPTICFLOW_THRESHOLD_VEC 2
 #define OPTICFLOW_FAST9_ADAPTIVE FALSE
-#define OPTICFLOW_FAST9_THRESHOLD 11
+#define OPTICFLOW_FAST9_THRESHOLD 60 //11
 #define OPTICFLOW_FAST9_MIN_DISTANCE 5
 
 /* Optical flow and processing variables */
@@ -56,7 +56,7 @@
 /* ### Global data used for obstacle avoidance ### */
 uint8_t TRANS_MOVE = TRUE;							// (bool) | Set to false when not translating to avoidance false positive
 
-float DETECT_THRESHOLD = 100;							// (float) | Threshold for depth reciprocal
+float DETECT_THRESHOLD = 1000;							// (float) | Threshold for depth reciprocal
 float OBS_HEADING_SET = 60.0;						// (float) | Heading change on detection
 
 uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
@@ -198,12 +198,12 @@ void *opticflow_module_calc(void *data __attribute__((unused))){
 
 		#if OPTICFLOW_DEBUG
 			//video_thread_save_shot(&img, &img_jpeg, counter);
-			jpeg_encode_image(&img, &img_jpeg, 80, 0);
+			jpeg_encode_image(&img, &img_jpeg, 85, 0);
 			rtp_frame_send(
 			  &video_sock,           // UDP device
 			  &img_jpeg,
 			  0,                        // Format 422
-			  80, // Jpeg-Quality
+			  85, // Jpeg-Quality
 			  0,                        // DRI Header
 			  0                         // 90kHz time increment
 			);

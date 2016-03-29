@@ -79,6 +79,7 @@ static float capFun(float in, float upBound, float lowBound){
  */
 uint8_t changeHeading(void)
 {
+	//TRANS_MOVE = FALSE;
 	float headingch = obs_heading();
 	printf("obs_heading is: %f\n",headingch);
 	//printf("nav heading before is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
