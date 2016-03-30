@@ -10,20 +10,18 @@
   <waypoints>
     <waypoint name="HOME" x="0.0" y="0.0"/>
     <waypoint name="CLIMB" x="1.2" y="-0.6"/>
-    <waypoint name="GOAL" x="0.0" y="0.0"/>
-    <waypoint height="1.342321" name="STDBY" x="-0.7" y="-0.8"/>
-    <waypoint name="HEADING" x="3.0" y="3.0"/>
+    <waypoint name="GOAL" x="1.0" y="1.0"/>
+    <waypoint height="1.4" name="STDBY" x="-0.7" y="-0.8"/>
     <waypoint name="TD" x="0.8" y="-1.7"/>
+    <waypoint name="HEADING" x="0.0" y="0.0"/>
     <waypoint lat="51.9906213" lon="4.3768628" name="_CZ1"/>
     <waypoint lat="51.9905874" lon="4.3767766" name="_CZ2"/>
     <waypoint lat="51.9906409" lon="4.3767226" name="_CZ3"/>
     <waypoint lat="51.990667" lon="4.376806" name="_CZ4"/>
-    <waypoint lat="51.990624" lon="4.376845" name="_OZ1"/>
-    <waypoint lat="51.990601" lon="4.376782" name="_OZ2"/>
-    <waypoint lat="51.990638" lon="4.376748" name="_OZ3"/>
-    <waypoint lat="51.990657" lon="4.376804" name="_OZ4"/>
-    <waypoint x="-2.0" y="-2.0" name="linetest1"/>
-    <waypoint x="2.0" y="3" name="linetest2"/>   
+    <waypoint lat="51.990627" lon="4.376862" name="_OZ1"/>
+    <waypoint lat="51.990592" lon="4.376778" name="_OZ2"/>
+    <waypoint lat="51.990643" lon="4.376719" name="_OZ3"/>
+    <waypoint lat="51.990678" lon="4.376804" name="_OZ4"/>
   </waypoints>
   <sectors>
     <sector color="red" name="CyberZoo">
@@ -41,7 +39,6 @@
   </sectors>
   <exceptions>
     <exception cond="!InsideObstacleZone(GetPosX(), GetPosY())" deroute="Standby"/>
-    <exception cond="objectDetected" deroute="change_heading"/>
     <!--exception cond="datalink_time > 2" deroute="Land here"/>
     <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land"/>
     <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('Land')) && !(nav_block == IndexOfBlock('Flare')) && !(nav_block == IndexOfBlock('Landed'))" deroute="Land here"/>-->
@@ -81,12 +78,10 @@
       <call fun="NavSetWaypointHere(WP_GOAL)"/>
     </block>
     <block name="StayGoal">
-      <go wp="GOAL"/>
-      <exception cond="block_time > 0.5" deroute="distance_test"/>
+      <stay wp="GOAL"/>
+      <exception cond="closeGoal()" deroute="distance_test"/>
       <exception cond="minDistanceExceed()" deroute="prepareObstacle"/>
       <deroute block="StayGoal"/>
-      <!--exception cond="!safeToGoForwards" deroute="ChangeHeading"/>
-      <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
     </block>
     <block name="prepareObstacle">
     	<call fun="NavSetWaypointHere(WP_GOAL)"/> 
@@ -97,7 +92,7 @@
     <block name="resetGoal">
     	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
     	<call fun="distToLine()"/> 
-    	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
+    	<!--call fun="moveWaypointForwards(WP_GOAL,2.0)"/>-->
     	<stay wp="STDBY"/>
     	<exception cond="block_time > 1" deroute="getOut"/>
     </block>
@@ -105,17 +100,15 @@
       <go wp="GOAL"/>
       <exception cond="block_time > 0.5" deroute="distance_test2"/>
       <exception cond="!minDistancePass()" deroute="StayGoal"/>
-      <!--exception cond="!safeToGoForwards" deroute="ChangeHeading"/>
-      <exception cond="!InsideObstacleZone(GetPosX(),GetPosY())" deroute="PrepareObstacleRun"/>-->
     </block>
     <block name="distance_test">
-    	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
+    	<call fun="moveWaypointForwards(WP_GOAL,2.0)"/>
     	<deroute block="StayGoal"/>
     	<exception cond="minDistanceExceed()" deroute="prepareObstacle"/>
     </block>
     <block name="distance_test2">
     	<call fun="distToLine()"/> 
-    	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
+    	<call fun="moveWaypointForwards(WP_GOAL,2.0)"/>
     	<deroute block="getOut"/>
     </block>
     <block name="change_heading">

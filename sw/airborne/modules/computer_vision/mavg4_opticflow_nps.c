@@ -113,3 +113,15 @@ float obs_heading(){
 		return 0;
 	}
 }
+
+uint8_t trans_false(){
+	TRANS_MOVE = FALSE;
+	return FALSE;
+}
+
+uint8_t trans_true(){
+	TRANS_MOVE = TRUE;
+	OBS_DETECT = FALSE;
+	return FALSE;
+}
+

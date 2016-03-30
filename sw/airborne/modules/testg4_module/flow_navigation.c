@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-int32_t incrementForAvoidance;
-uint8_t safeToGoForwards;
+//int32_t incrementForAvoidance;
+//uint8_t safeToGoForwards;
 float incrx = 0.0;
 float incry = 0.8;
 float distthresh = 1.4;
@@ -18,7 +18,8 @@ float yxratio = 1;
 float mindistance=10;
 uint8_t wp_target;
 uint8_t wp_heading;
-uint8_t objectDetected = 0;
+//uint8_t objectDetected = 0;
+float waythresh = 0.6;
 
 struct Line{
 	float a;
@@ -45,11 +46,25 @@ static struct Line constructLine(uint8_t wp_1,uint8_t wp_2){
 	return line;
 }
 
+/*
 void flow_navigation_init() {
 	incrementForAvoidance = 360;
 	safeToGoForwards = TRUE;
 }
+*/
 
+uint8_t closeGoal(){
+	struct EnuCoor_f *pos = stateGetPositionEnu_f(); // Get your current position
+	float xself = pos->x;
+	float yself = pos->y;
+	float wayx = waypoint_get_x(wp_target);
+	float wayy = waypoint_get_y(wp_target);
+	float distx = xself-wayx;
+	float disty = yself-wayy;
+	float dist = sqrt(pow(distx,2)+pow(disty,2));
+	return dist<waythresh;
+
+}
 
 
 static float absol(float in){
@@ -81,7 +96,7 @@ uint8_t changeHeading(void)
 {
 	TRANS_MOVE = FALSE;
 	float headingch = obs_heading();
-	printf("obs_heading is: %f\n",headingch);
+	//printf("obs_heading is: %f\n",headingch);
 	//printf("nav heading before is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
 	nav_set_heading_deg(ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180+headingch);
 	//printf("nav heading after is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
@@ -122,6 +137,7 @@ uint8_t moveWaypointForwards(uint8_t waypoint, float distanceMeters){
 	return FALSE;
 }
 
+/*
 uint8_t chooseRandomIncrementAvoidance(){
 
 	int r = rand() % 2;
@@ -133,10 +149,11 @@ uint8_t chooseRandomIncrementAvoidance(){
 	}
 	return FALSE;
 }
+*/
 
 void checkDistance(void){
-	printf("obs det is %u\n",OBS_DETECT);
-	printf("obs head is %f\n",OBS_HEADING);
+	//printf("obs det is %u\n",OBS_DETECT);
+	//printf("obs head is %f\n",OBS_HEADING);
 	struct EnuCoor_f *pos = stateGetPositionEnu_f(); // Get your current position
 	float xself = pos->x;
 	float yself = pos->y;
@@ -187,8 +204,8 @@ uint8_t distToLine(void){
 			xinc = xinc/norm;
 			yinc = yinc/norm;
 			//printf("wall i %i, distance %f\n",i,distance);
-			incrx = incrx + wallscale*xinc*(1/pow(distance,3));
-			incry = incry + wallscale*yinc*(1/pow(distance,3));
+			incrx = incrx + wallscale*xinc*(1/pow(distance,1));
+			incry = incry + wallscale*yinc*(1/pow(distance,1));
 		}
 
 	}
@@ -207,11 +224,11 @@ uint8_t distToLine(void){
 
 
 	if(absol(incrx)>absol(incry)){
-		incrx = capFun(incrx,1,-1);
+		incrx = capFun(incrx,1.3,-1.3);
 		incry = incrx*yxratio;
 	}
 	else{
-		incry = capFun(incry,1,-1);
+		incry = capFun(incry,1.3,-1.3);
 		incrx = incry/yxratio;
 	}
 	//printf("incrx,incry is: %f,%f\n",incrx,incry);

@@ -81,7 +81,7 @@
     <block name="StayGoal">
       <call fun="trans_true()"/>
       <stay wp="GOAL"/>
-      <exception cond="block_time > 1.0" deroute="distance_test"/>
+      <exception cond="closeGoal()" deroute="distance_test"/>
       <exception cond="minDistanceExceed()" deroute="prepareObstacle"/>
       <deroute block="StayGoal"/>
     </block>
@@ -102,14 +102,14 @@
     <block name="resetGoal">
     	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
     	<call fun="distToLine()"/> 
-    	<call fun="moveWaypointForwards(WP_GOAL,2.0)"/>
+    	<!--call fun="moveWaypointForwards(WP_GOAL,2.0)"/>-->
     	<stay wp="STDBY"/>
     	<exception cond="block_time > 2" deroute="getOut"/>
     </block>
     <block name="getOut">
       <call fun="trans_true()"/>
-      <go wp="GOAL"/>
-      <exception cond="block_time > 1" deroute="distance_test2"/>
+      <stay wp="GOAL"/>
+      <exception cond="closeGoal()" deroute="distance_test2"/>
       <exception cond="!minDistancePass()" deroute="StayGoal"/>	
     </block>
     <block name="distance_test2">

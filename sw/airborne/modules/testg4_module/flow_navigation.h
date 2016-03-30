@@ -3,15 +3,16 @@
 #include <inttypes.h>
 
 
-extern int32_t incrementForAvoidance;
-extern uint8_t safeToGoForwards;
+//extern int32_t incrementForAvoidance;
+//extern uint8_t safeToGoForwards;
 extern float incrx;
 extern float incry;
 extern float distthresh;
 extern float wallscale;
-extern float objectscale;
-extern float objectdet;
-extern uint8_t objectDetected;
+//extern float objectscale;
+//extern float objectdet;
+//extern uint8_t objectDetected;
+extern float waythresh;
 
 
 extern void flow_navigation_init(void);
