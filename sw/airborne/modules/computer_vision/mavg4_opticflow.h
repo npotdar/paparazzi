@@ -54,5 +54,7 @@ extern void opticflow_module_start(void);
 extern void opticflow_module_stop(void);
 void opticflow_calc_frame(struct opticflow_t *opticflow, struct image_t *img, struct opticflow_result_t *result);
 extern float obs_heading(void);
+extern uint8_t trans_false(void);
+extern uint8_t trans_true(void);
 
 #endif

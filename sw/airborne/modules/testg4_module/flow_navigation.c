@@ -79,7 +79,7 @@ static float capFun(float in, float upBound, float lowBound){
  */
 uint8_t changeHeading(void)
 {
-	//TRANS_MOVE = FALSE;
+	TRANS_MOVE = FALSE;
 	float headingch = obs_heading();
 	printf("obs_heading is: %f\n",headingch);
 	//printf("nav heading before is %f\n",ANGLE_FLOAT_OF_BFP(nav_heading)/pidiv180);
@@ -89,6 +89,7 @@ uint8_t changeHeading(void)
   // Check if your turn made it go out of bounds...
   //INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
 	moveWaypointForwards(wp_target,1.0);
+	//TRANS_MOVE = TRUE;
   return FALSE;
 }
 
@@ -161,7 +162,6 @@ void checkDistance(void){
  */
 
 uint8_t distToLine(void){
-
 	//struct EnuCoor_f *speed = stateGetSpeedEnu_f();
 	//printf("speed x,y,z = %f,%f,%f\n",speed->x,speed->y,speed->z);
 	//speed->y=1;
