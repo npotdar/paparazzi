@@ -39,10 +39,12 @@
   </sectors>
   <exceptions>
     <exception cond="!InsideObstacleZone(GetPosX(), GetPosY())" deroute="Standby"/>
-    <exception cond="OBS_DETECT && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed')) && !(nav_block == IndexOfBlock('Start Engine')) && !(nav_block == IndexOfBlock('Takeoff'))" deroute="change_heading"/>
-    <!--exception cond="datalink_time > 2" deroute="landhere"/-->
     <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="land"/>
     <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="landhere"/>
+    <exception cond="OBS_DETECT && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed')) && !(nav_block == IndexOfBlock('Start Engine')) && !(nav_block == IndexOfBlock('Takeoff'))" deroute="change_heading"/>
+    <exception cond="OBS_DETECT_S && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed')) && !(nav_block == IndexOfBlock('Start Engine')) && !(nav_block == IndexOfBlock('Takeoff'))" deroute="change_heading_small"/>
+    <!--exception cond="datalink_time > 2" deroute="landhere"/-->
+    
   </exceptions>
   <blocks>
     <block name="Wait GPS">
@@ -50,6 +52,7 @@
       <while cond="!GpsFixValid()"/>
     </block>
     <block name="Holding point">
+      <call fun="trans_false()"/>
       <call fun="NavKillThrottle()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>
@@ -70,6 +73,7 @@
 
     
     <block key="s" name="Standby" strip_button="Standby" strip_icon="home.png">
+      <call fun="trans_true()" />
       <call fun="NavSetWaypointHere(WP_STDBY)"/>
       <stay wp="STDBY"/>
     </block>
@@ -79,14 +83,13 @@
       <deroute block="StayGoal"/>
     </block>
     <block name="StayGoal">
-      <call fun="trans_true()"/>
       <stay wp="GOAL"/>
       <exception cond="closeGoal()" deroute="distance_test"/>
       <exception cond="minDistanceExceed()" deroute="prepareObstacle"/>
       <deroute block="StayGoal"/>
     </block>
     <block name="distance_test">
-    	<call fun="moveWaypointForwards(WP_GOAL,2.0)"/>
+    	<call fun="moveWaypointForwards(WP_GOAL,2.5)"/>
     	<deroute block="StayGoal"/>
     	<exception cond="minDistanceExceed()" deroute="prepareObstacle"/>
     </block>
@@ -114,7 +117,7 @@
     </block>
     <block name="distance_test2">
     	<!--call fun="distToLine()"/> -->
-    	<call fun="moveWaypointForwards(WP_GOAL,2.0)"/>
+    	<call fun="moveWaypointForwards(WP_GOAL,2.5)"/>
     	<deroute block="getOut"/>
     </block>
 
@@ -122,11 +125,16 @@
     <block name="change_heading">
     	<call fun="NavSetWaypointHere(WP_GOAL)"/> 
     	<call fun="changeHeading()"/>
+    	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
     	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
     	<stay wp="STDBY"/>	
-    	<exception cond="block_time > 3" deroute="StayGoal"/>
+    	<exception cond="block_time > 5" deroute="START"/>
     </block>
-
+    <block name="change_heading_small">
+    	<call fun="changeHeading()"/>
+	<stay wp="GOAL"/>
+    	<exception cond="block_time > 2" deroute="START"/>
+    </block>
 
     <!-- LANDING SEQUENCES FROM HERE -->
     <block name="landhere" strip_button="Land Here" strip_icon="land-right.png" key="l">
@@ -140,8 +148,10 @@
       <exception cond="!nav_is_in_flight()" deroute="landed"/>
       <call fun="NavStartDetectGround()"/>
       <stay climb="nav_descend_vspeed" vmode="climb" wp="TD"/>
+      <exception cond="block_time > 2" deroute="landed"/>
     </block>
     <block name="landed" key="k">
+      <call fun="trans_false()"/>
       <call fun="NavKillThrottle()"/>
       <attitude pitch="0" roll="0" throttle="0" until="FALSE" vmode="throttle"/>
     </block>

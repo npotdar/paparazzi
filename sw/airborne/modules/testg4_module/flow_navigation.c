@@ -103,7 +103,7 @@ uint8_t changeHeading(void)
   //nav_heading = nav_heading + objectdet;
   // Check if your turn made it go out of bounds...
   //INT32_ANGLE_NORMALIZE(*heading); // HEADING HAS INT32_ANGLE_FRAC....
-	moveWaypointForwards(wp_target,1.0);
+	moveWaypointForwards(wp_target,0.2);
 	//TRANS_MOVE = TRUE;
   return FALSE;
 }
@@ -224,11 +224,11 @@ uint8_t distToLine(void){
 
 
 	if(absol(incrx)>absol(incry)){
-		incrx = capFun(incrx,1.3,-1.3);
+		incrx = capFun(incrx,1.6,-1.6);
 		incry = incrx*yxratio;
 	}
 	else{
-		incry = capFun(incry,1.3,-1.3);
+		incry = capFun(incry,1.6,-1.6);
 		incrx = incry/yxratio;
 	}
 	//printf("incrx,incry is: %f,%f\n",incrx,incry);

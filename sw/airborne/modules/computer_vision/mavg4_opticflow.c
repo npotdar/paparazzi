@@ -42,7 +42,7 @@
 #define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 272,272
 #define OPTICFLOW_SORT 272
 
-#define SEGMENT_AMOUNT 5						// (int) segments | Number of semgnets to make
+#define SEGMENT_AMOUNT 4						// (int) segments | Number of semgnets to make
 
 /* Debugging */
 #define PERIODIC_TELEMETRY TRUE
@@ -54,10 +54,11 @@
 /* ### Global data used for obstacle avoidance ### */
 uint8_t TRANS_MOVE = TRUE;							// (bool) | Set to false when not translating to avoidance false positive
 
-float DETECT_THRESHOLD = 60;							// (float) | Threshold for depth reciprocal
+float DETECT_THRESHOLD = 50.0;							// (float) | Threshold for depth reciprocal
 float OBS_HEADING_SET = 100.0;						// (float) | Heading change on detection
 
 uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
+uint8_t OBS_DETECT_S = FALSE;						// (bool) | Small obstacle detected
 float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
 
 uint8_t ERROR_COUNT = 0;							// (int) | Image Error counter
@@ -336,8 +337,8 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		uint8_t i;
 		uint8_t fov = 2;
 
-		if(!OBS_DETECT){
-		for(i = SEGMENT_AMOUNT/2 - fov; i <= SEGMENT_AMOUNT/2 + fov; i++){
+		if(!OBS_DETECT || !OBS_DETECT_S){
+		for(i = SEGMENT_AMOUNT/2 - fov; i <= SEGMENT_AMOUNT/2 + fov -1; i++){
 			if (segmented_array[i] >= DETECT_THRESHOLD){
 				if(i < SEGMENT_AMOUNT/2){
 					OBS_DETECT = TRUE;
@@ -346,7 +347,15 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 					OBS_DETECT = TRUE;
 					OBS_HEADING = -1*OBS_HEADING_SET;
 				}
-			}
+			} else if (segmented_array[i] >= 0.6*DETECT_THRESHOLD){
+				if(i < SEGMENT_AMOUNT/2){
+					OBS_DETECT_S = TRUE;
+					OBS_HEADING = 0.2*OBS_HEADING_SET;
+				} else if (i >= SEGMENT_AMOUNT/2){
+					OBS_DETECT_S = TRUE;
+					OBS_HEADING = -0.2*OBS_HEADING_SET;
+				}
+		}
 		}
 		}
 
@@ -362,7 +371,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	* ## IMAGE DIFFERENCE BASED DETECTION 
 	**************************/
 	//ALSO DO COLOUR AVOIDANCE
-	/*
+
 
 		int color_avg_x;
 		int color_avg_y;
@@ -373,12 +382,17 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		printf("%d, %d\n", color_avg_x, color_count);
 	#endif
 
+
 	if(!OBS_DETECT){
-		if(color_count >= 4000){
+
+		if(color_count >= 3000){
 			OBS_DETECT = TRUE;
-			OBS_HEADING = OBS_HEADING_SET;
+			if(color_avg_x <= 136){
+				OBS_HEADING = OBS_HEADING_SET;
+			} else {
+				OBS_HEADING = -1*OBS_HEADING_SET;
+			}
 		}
-		*/
 		/*
 		if(ERROR_COUNT == 4){
 			ERROR_COUNT = 0;
@@ -394,7 +408,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		}
 		ERROR_ADD += image_1to1diff(&opticflowin->img_gray, &opticflowin->prev_img_gray, NULL, 111, 111);
 		*/
-	//};
+	};
 
 	/*************************
 	* PRINT AND EXTRAS 
@@ -458,13 +472,14 @@ float obs_heading(){
 	float heading_change;
 	if(OBS_DETECT){
 		OBS_DETECT = FALSE;
-		heading_change = OBS_HEADING;
-		OBS_HEADING = 0;
-		return heading_change;
+	} else if(OBS_DETECT_S){
+		OBS_DETECT_S = FALSE;
 	} else {
-		printf("wrong block");
 		return 0;
 	}
+	heading_change = OBS_HEADING;
+	OBS_HEADING = 0;
+    return heading_change;
 }
 
 uint8_t trans_false(){
@@ -475,6 +490,7 @@ uint8_t trans_false(){
 uint8_t trans_true(){
 	TRANS_MOVE = TRUE;
 	OBS_DETECT = FALSE;
+	OBS_DETECT_S = FALSE;
 	return FALSE;
 }
 
