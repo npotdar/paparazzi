@@ -37,8 +37,8 @@
 #define OPTICFLOW_FAST9_MIN_DISTANCE 5
 
 /* Optical flow and processing variables */
-#define OPTICFLOW_PADDING 50,70	// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
-#define PAD_SORT 50
+#define OPTICFLOW_PADDING 66,70	// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
+#define PAD_SORT 66
 #define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 272,272
 #define OPTICFLOW_SORT 272
 
@@ -54,15 +54,15 @@
 /* ### Global data used for obstacle avoidance ### */
 uint8_t TRANS_MOVE = TRUE;							// (bool) | Set to false when not translating to avoidance false positive
 
-float DETECT_THRESHOLD = 50.0;							// (float) | Threshold for depth reciprocal
+float DETECT_THRESHOLD = 57.0;							// (float) | Threshold for depth reciprocal
 float OBS_HEADING_SET = 100.0;						// (float) | Heading change on detection
 
 uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
-uint8_t OBS_DETECT_S = FALSE;						// (bool) | Small obstacle detected
+float OBS_DETECT_S = FALSE;						// (bool) | Small obstacle detected
 float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
 
 uint8_t ERROR_COUNT = 0;							// (int) | Image Error counter
-float IMGERROR_THRESHOLD = 0.0;							// (float) | Image Error threshold
+float IMGERROR_THRESHOLD = 2000;							// (float) | Image Error threshold
 float ERROR_ADD = 0.0;								// (float) | Image Error addition image difference
 float ERROR_AVG = 0.0;								// (float) | Average image error over 4 images
 
@@ -103,7 +103,7 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
   pthread_mutex_lock(&opticflow_mutex);
   pprz_msg_send_OFG(trans, dev, AC_ID,
                                &opticflow_result.fps, &opticflow_result.corner_cnt,
-                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows, OBS_DETECT_S,
+                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows, &ERROR_AVG,
 							   &opticflow_result.obs_detect, &opticflow_result.obs_heading);
   pthread_mutex_unlock(&opticflow_mutex);
 }
@@ -265,8 +265,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	}
 
 	// FAST Check if corners were detected, if not then continue with no optic flow calculations
-	if (result->corner_cnt < 1){
+	if (result->corner_cnt < 2){
 		free(corners);
+		if(!OBS_DETECT){
+			OBS_DETECT = TRUE;
+			OBS_HEADING = 180;
+		}
 		//image_copy(&opticflowin->img_gray, &opticflowin->prev_img_gray);
 		//return;
 	} else {
@@ -319,6 +323,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 						}
 					}
 			}
+		segmented_array[0] = 0.8*segmented_array[0];
+		segmented_array[3] = 0.8*segmented_array[3];
+
+		for(iter=0; iter < result->tracked_cnt; iter++){
+			printf("%d %d \n",vectors[iter].flow_x,vectors[iter].flow_y);
+		}
 
 		/* Construct reciprocal flow matrix
 		for (n=0; n<SEGMENT_AMOUNT; n++)
@@ -347,15 +357,15 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 					OBS_DETECT = TRUE;
 					OBS_HEADING = -1*OBS_HEADING_SET;
 				}
-			} else if (segmented_array[i] >= 0.6*DETECT_THRESHOLD){
+			} /* else if (segmented_array[i] >= 0.8*DETECT_THRESHOLD){
 				if(i < SEGMENT_AMOUNT/2){
 					OBS_DETECT_S = TRUE;
-					OBS_HEADING = 0.2*OBS_HEADING_SET;
+					OBS_HEADING = 0.65*OBS_HEADING_SET;
 				} else if (i >= SEGMENT_AMOUNT/2){
 					OBS_DETECT_S = TRUE;
-					OBS_HEADING = -0.2*OBS_HEADING_SET;
+					OBS_HEADING = -0.65*OBS_HEADING_SET;
 				}
-		}
+		}*/
 		}
 		}
 
@@ -384,14 +394,10 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 
 	if(!OBS_DETECT){
-
-		if(color_count >= 3000){
+		ERROR_AVG = color_count;
+		if(color_count >= IMGERROR_THRESHOLD){
 			OBS_DETECT = TRUE;
-			if(color_avg_x <= 136){
-				OBS_HEADING = OBS_HEADING_SET;
-			} else {
-				OBS_HEADING = -1*OBS_HEADING_SET;
-			}
+			OBS_HEADING = 140;
 		}
 		/*
 		if(ERROR_COUNT == 4){

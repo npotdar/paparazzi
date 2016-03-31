@@ -60,7 +60,7 @@
 
       <!-- Detection based on vision -->
       <dl_settings name="Detection">
-        <!--dl_setting var="IMGERROR_THRESHOLD" min="0" step="100" max="1000000" shortname="imgerr_thres" /-->
+        <dl_setting var="IMGERROR_THRESHOLD" min="0" step="100" max="6000" shortname="imgerr_thres" />
         <dl_setting var="DETECT_THRESHOLD" min="0" step="10" max="200" shortname="detect_thres" />
         <dl_setting var="OBS_HEADING_SET" min="-180" step="1" max="180" shortname="heading_set" />
         <dl_setting var="OBS_HEADING" min="-180" step="1" max="180"  shortname="heading_cur" />
