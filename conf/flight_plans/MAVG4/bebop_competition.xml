@@ -125,18 +125,18 @@
 
     <!-- Obstacle Vision Detection -->
     <block name="change_heading">
-	<call fun="trans_false()"/>
     	<!--call fun="NavSetWaypointHere(WP_GOAL)"/--> 
     	<call fun="changeHeading()"/>
     	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
     	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
     	<stay wp="STDBY"/>	
-    	<exception cond="block_time > 4" deroute="START"/>
+    	<exception cond="block_time > 3" deroute="START"/>
     </block>
     <block name="holdpos">
+	<call fun="trans_false()"/>
 	<call fun="NavSetWaypointHere(WP_GOAL)"/> 
 	<stay wp="GOAL"/>
-	<exception cond="block_time > 2" deroute="change_heading"/>
+	<exception cond="block_time > 1" deroute="change_heading"/>
     </block>
     
 	
