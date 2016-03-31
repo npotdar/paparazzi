@@ -326,9 +326,9 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		segmented_array[0] = 0.8*segmented_array[0];
 		segmented_array[3] = 0.8*segmented_array[3];
 
-		for(iter=0; iter < result->tracked_cnt; iter++){
+		/*for(iter=0; iter < result->tracked_cnt; iter++){
 			printf("%d %d \n",vectors[iter].flow_x,vectors[iter].flow_y);
-		}
+		}*/
 
 		/* Construct reciprocal flow matrix
 		for (n=0; n<SEGMENT_AMOUNT; n++)

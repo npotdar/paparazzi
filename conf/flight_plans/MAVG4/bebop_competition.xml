@@ -110,7 +110,7 @@
     </block>
     <block name="waithere">
 	<call fun="trans_true()"/>
-	<exception cond="block_time > 2" deroute="getOut"/>
+	<exception cond="block_time > 1" deroute="getOut"/>
     </block>
     <block name="getOut">
       <stay wp="GOAL"/>
@@ -130,7 +130,7 @@
     	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
     	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
     	<stay wp="STDBY"/>	
-    	<exception cond="block_time > 3" deroute="START"/>
+    	<exception cond="block_time > 2" deroute="START"/>
     </block>
     <block name="holdpos">
 	<call fun="trans_false()"/>
