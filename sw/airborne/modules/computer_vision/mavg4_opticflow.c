@@ -103,7 +103,7 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
   pthread_mutex_lock(&opticflow_mutex);
   pprz_msg_send_OFG(trans, dev, AC_ID,
                                &opticflow_result.fps, &opticflow_result.corner_cnt,
-                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows, &ERROR_AVG,
+                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows, OBS_DETECT_S,
 							   &opticflow_result.obs_detect, &opticflow_result.obs_heading);
   pthread_mutex_unlock(&opticflow_mutex);
 }
@@ -470,12 +470,9 @@ void opticflow_module_stop(void)
  */
 float obs_heading(){
 	float heading_change;
-	if(OBS_DETECT){
-		OBS_DETECT = FALSE;
-	} else if(OBS_DETECT_S){
-		OBS_DETECT_S = FALSE;
-	} else {
-		return 0;
+	if(OBS_DETECT || OBS_DETECT_S){
+	OBS_DETECT = FALSE;
+	OBS_DETECT_S = FALSE;
 	}
 	heading_change = OBS_HEADING;
 	OBS_HEADING = 0;

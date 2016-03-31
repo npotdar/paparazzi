@@ -123,14 +123,16 @@
 
     <!-- Obstacle Vision Detection -->
     <block name="change_heading">
+	<call fun="trans_false()"/>
     	<call fun="NavSetWaypointHere(WP_GOAL)"/> 
     	<call fun="changeHeading()"/>
     	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
     	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
     	<stay wp="STDBY"/>	
-    	<exception cond="block_time > 5" deroute="START"/>
+    	<exception cond="block_time > 2" deroute="START"/>
     </block>
     <block name="change_heading_small">
+	<call fun="trans_false()"/>
     	<call fun="changeHeading()"/>
 	<stay wp="GOAL"/>
     	<exception cond="block_time > 2" deroute="START"/>
