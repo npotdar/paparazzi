@@ -43,7 +43,6 @@ extern float DETECT_THRESHOLD;
 extern float OBS_HEADING_SET;
 
 extern uint8_t OBS_DETECT;
-extern float OBS_DETECT_S;
 extern float OBS_HEADING;
 
 extern float IMGERROR_THRESHOLD;

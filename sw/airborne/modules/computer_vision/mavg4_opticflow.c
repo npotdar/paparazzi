@@ -59,10 +59,9 @@ uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
 float OBS_DETECT_S = FALSE;						// (bool) | Small obstacle detected
 float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
 
-int ERROR_COUNT = 1;							// (int) | Image Error counter
-float IMGERROR_THRESHOLD = 2000;							// (float) | Image Error threshold
-float ERROR_ADD = 0.0;								// (float) | Image Error addition image difference
-float ERROR_AVG = 0.0;								// (float) | Average image error over 4 images
+int ERROR_COUNT = 1;							// (int) | Heading change randomiser
+float IMGERROR_THRESHOLD = 2000;							// (float) | Colour detection threshold
+float ERROR_CALC = 0.0;								// (float) | Colour detection count
 
 
 /* ### Storage variables ### */
@@ -101,7 +100,7 @@ static void opticflow_telem_send(struct transport_tx *trans, struct link_device 
   pthread_mutex_lock(&opticflow_mutex);
   pprz_msg_send_OFG(trans, dev, AC_ID,
                                &opticflow_result.fps, &opticflow_result.corner_cnt,
-                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows, &ERROR_AVG,
+                               &opticflow_result.tracked_cnt, SEGMENT_AMOUNT, opticflow_result.flows, &ERROR_CALC,
 							   &opticflow_result.obs_detect, &opticflow_result.obs_heading);
   pthread_mutex_unlock(&opticflow_mutex);
 }
@@ -381,7 +380,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 	// Check if orange colour detected is larger then a threshold
 	if(!OBS_DETECT){
-		ERROR_AVG = color_count;
+		ERROR_CALC = color_count;
 		if(color_count >= IMGERROR_THRESHOLD){
 			OBS_DETECT = TRUE;
 			OBS_HEADING = ERROR_COUNT*150;
