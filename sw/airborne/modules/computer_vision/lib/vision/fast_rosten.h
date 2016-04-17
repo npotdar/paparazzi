@@ -37,6 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "std.h"
 #include "lib/vision/image.h"
 
-struct point_t *fast9_detect(struct image_t *img, uint8_t threshold, uint16_t min_dist, uint16_t x_padding, uint16_t y_padding, uint16_t *num_corners);
+struct point_t *fast9_detect(struct image_t *img, uint8_t threshold, uint16_t min_dist, uint16_t xl_padding, uint16_t xr_padding, uint16_t yt_padding, uint16_t yb_padding, uint16_t *num_corners);
 
 #endif

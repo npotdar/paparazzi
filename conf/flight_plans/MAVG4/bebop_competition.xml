@@ -41,7 +41,7 @@
     <exception cond="!InsideObstacleZone(GetPosX(), GetPosY()) && !(nav_block == IndexOfBlock('judgeMove'))" deroute="Standby"/>
     <exception cond="electrical.bat_low && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="land"/>
     <exception cond="electrical.bat_critical && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed'))" deroute="landhere"/>
-    <exception cond="OBS_DETECT && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed')) && !(nav_block == IndexOfBlock('Start Engine')) && !(nav_block == IndexOfBlock('Takeoff')) && !(nav_block == IndexOfBlock('change_heading'))" deroute="holdpos"/>
+    <exception cond="OBS_DETECT && !(nav_block == IndexOfBlock('land')) && !(nav_block == IndexOfBlock('flare')) && !(nav_block == IndexOfBlock('landed')) && !(nav_block == IndexOfBlock('Start Engine')) && !(nav_block == IndexOfBlock('Takeoff')) && !(nav_block == IndexOfBlock('Standby')) && !(nav_block == IndexOfBlock('change_heading'))" deroute="holdpos"/>
     <!--exception cond="datalink_time > 2" deroute="landhere"/-->
     
   </exceptions>
@@ -127,14 +127,14 @@
     <block name="change_heading">
     	<!--call fun="NavSetWaypointHere(WP_GOAL)"/--> 
     	<call fun="changeHeading()"/>
-    	<call fun="moveWaypointForwards(WP_GOAL,1.0)"/>
-    	<call fun="NavSetWaypointHere(WP_STDBY)"/> 
+    	<!--call fun="moveWaypointForwards(WP_GOAL,1.0)"/--> 
     	<stay wp="STDBY"/>	
     	<exception cond="block_time > 2" deroute="START"/>
     </block>
     <block name="holdpos">
 	<call fun="trans_false()"/>
 	<call fun="NavSetWaypointHere(WP_GOAL)"/> 
+        <call fun="NavSetWaypointHere(WP_STDBY)"/>
 	<stay wp="GOAL"/>
 	<exception cond="block_time > 1" deroute="change_heading"/>
     </block>

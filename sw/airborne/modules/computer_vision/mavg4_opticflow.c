@@ -18,13 +18,10 @@
 #include "lib/encoding/rtp.h"
 #include "udp_socket.h"
 
-// include board for bottom_camera and front_camera on ARDrone2 and Bebop
-//#include BOARD_CONFIG
-
 /* ### Defaults defined for bebop ### */
 #define OPTICFLOW_DEVICE /dev/video1				// Path to video device
 #define OPTICFLOW_DEVICE_SIZE 1408,2112				// (int) width [px], (int) height [px] | Video device resolution
-#define OPTICFLOW_DEVICE_BUFFERS 15		// (int) | Video device V4L2 buffers default: 15
+#define OPTICFLOW_DEVICE_BUFFERS 15					// (int) | Video device V4L2 buffers default: 15
 
 /* ### Defaults defined for opticalflow SEE .H FILE! ###*/
 #define OPTICFLOW_MAX_TRACK_CORNERS 20
@@ -32,12 +29,13 @@
 #define OPTICFLOW_SUBPIXEL_FACTOR 10
 #define OPTICFLOW_MAX_ITERATIONS 10
 #define OPTICFLOW_THRESHOLD_VEC 2
+#define OPTICFLOW_FAST9_MIN_CORNERS 2
 #define OPTICFLOW_FAST9_ADAPTIVE FALSE
 #define OPTICFLOW_FAST9_THRESHOLD 15 //11
 #define OPTICFLOW_FAST9_MIN_DISTANCE 5
 
 /* Optical flow and processing variables */
-#define OPTICFLOW_PADDING 66,70	// (int) pad width [px], (int) pad height [px] | Pad image on left, right, top, bottom to not scan!
+#define OPTICFLOW_PADDING 66,66,56,98			// 4 * (int) [px] | Pad image on left, right, top, bottom to not scan!
 #define PAD_SORT 66
 #define OPTICFLOW_PROCESS_SIZE 272,272			// (int) width [px], (int) height [px] | Processed image size 272,272
 #define OPTICFLOW_SORT 272
@@ -61,7 +59,7 @@ uint8_t OBS_DETECT = FALSE;							// (bool) | Obstacle detected?
 float OBS_DETECT_S = FALSE;						// (bool) | Small obstacle detected
 float OBS_HEADING = 0.0;								// (float) | Obstacle heaing change
 
-uint8_t ERROR_COUNT = 0;							// (int) | Image Error counter
+int ERROR_COUNT = 1;							// (int) | Image Error counter
 float IMGERROR_THRESHOLD = 2000;							// (float) | Image Error threshold
 float ERROR_ADD = 0.0;								// (float) | Image Error addition image difference
 float ERROR_AVG = 0.0;								// (float) | Average image error over 4 images
@@ -237,7 +235,11 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	// Update FPS for information
 	result->fps = 3.5;
 
-
+	if(ERROR_COUNT == 1){
+		ERROR_COUNT = -1;
+	} else {
+		ERROR_COUNT = 1;
+	}
 	// Convert image to grayscale uses PROCESS_SIZE
 	image_to_grayscale(img, &opticflowin->img_gray);
 
@@ -265,11 +267,11 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 	}
 
 	// FAST Check if corners were detected, if not then continue with no optic flow calculations
-	if (result->corner_cnt < 2){
+	if (result->corner_cnt < OPTICFLOW_FAST9_MIN_CORNERS){
 		free(corners);
 		if(!OBS_DETECT){
 			OBS_DETECT = TRUE;
-			OBS_HEADING = 180;
+			OBS_HEADING = ERROR_COUNT*150;
 		}
 		//image_copy(&opticflowin->img_gray, &opticflowin->prev_img_gray);
 		//return;
@@ -295,18 +297,16 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 		* ## FLOW BASED DETECTION
 		**************************/
 
-		// Build segmented array
+		// Declaration of variable used in the flow matrix loops
 		uint8_t n;
 		uint8_t iter;
 		int magnitude_squared;
-		//float magnitude_root;
 		float magnitude_root[result->tracked_cnt];
 
 		int segment_size=(OPTICFLOW_SORT - 2*PAD_SORT)/SEGMENT_AMOUNT;
 		float segmented_array[SEGMENT_AMOUNT];
-		//float magnitude_array[SEGMENT_AMOUNT];
 
-		// Construct flow matrix
+		//These loops creates an array that contains the largest flow vectors for each of the 4 segments of the image
 		for (iter=0; iter<result->tracked_cnt; iter++)
 			{
 			magnitude_squared = (vectors[iter].flow_x * vectors[iter].flow_x + vectors[iter].flow_y * vectors[iter].flow_y );
@@ -315,7 +315,6 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 					{
 						if (( (vectors[iter].pos.x / OPTICFLOW_SUBPIXEL_FACTOR)>(n*segment_size + PAD_SORT) ) && ( (vectors[iter].pos.x / OPTICFLOW_SUBPIXEL_FACTOR) <= ((n+1)*segment_size + PAD_SORT) ) )
 						{
-							//segmented_array[n] = (segmented_array[n] + (magnitude_root));
 							if (magnitude_root[iter]>segmented_array[n])
 								{
 									segmented_array[n] = magnitude_root[iter];
@@ -323,17 +322,12 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 						}
 					}
 			}
+		// The outer two segments are reduced in magnitude to compensate for the flows being larger at edge of the image
 		segmented_array[0] = 0.8*segmented_array[0];
 		segmented_array[3] = 0.8*segmented_array[3];
 
 		/*for(iter=0; iter < result->tracked_cnt; iter++){
 			printf("%d %d \n",vectors[iter].flow_x,vectors[iter].flow_y);
-		}*/
-
-		/* Construct reciprocal flow matrix
-		for (n=0; n<SEGMENT_AMOUNT; n++)
-		{
-			segmented_array[n]= (1/magnitude_array[n]);
 		}*/
 
 		#if OPTICFLOW_DEBUG
@@ -357,15 +351,7 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 					OBS_DETECT = TRUE;
 					OBS_HEADING = -1*OBS_HEADING_SET;
 				}
-			} /* else if (segmented_array[i] >= 0.8*DETECT_THRESHOLD){
-				if(i < SEGMENT_AMOUNT/2){
-					OBS_DETECT_S = TRUE;
-					OBS_HEADING = 0.65*OBS_HEADING_SET;
-				} else if (i >= SEGMENT_AMOUNT/2){
-					OBS_DETECT_S = TRUE;
-					OBS_HEADING = -0.65*OBS_HEADING_SET;
-				}
-		}*/
+			}
 		}
 		}
 
@@ -378,42 +364,28 @@ void opticflow_calc_frame(struct opticflow_t *opticflowin, struct image_t *img,
 
 
 	/*************************
-	* ## IMAGE DIFFERENCE BASED DETECTION 
+	* ## IMAGE COLOUR BASED DETECTION
 	**************************/
 	//ALSO DO COLOUR AVOIDANCE
 
 
-		int color_avg_x;
-		int color_avg_y;
-		int color_count;
-		image_yuv422_colorfilt_ext(img,img,&color_count,&color_avg_x,&color_avg_y,0,131,93,255,134,255);
+	int color_avg_x;
+	int color_avg_y;
+	int color_count;
+	// Filter out orange colour
+	image_yuv422_colorfilt_ext(img,img,&color_count,&color_avg_x,&color_avg_y,0,131,93,255,134,255);
 
 	#if OPTICFLOW_DEBUG
 		printf("%d, %d\n", color_avg_x, color_count);
 	#endif
 
-
+	// Check if orange colour detected is larger then a threshold
 	if(!OBS_DETECT){
 		ERROR_AVG = color_count;
 		if(color_count >= IMGERROR_THRESHOLD){
 			OBS_DETECT = TRUE;
-			OBS_HEADING = 140;
+			OBS_HEADING = ERROR_COUNT*150;
 		}
-		/*
-		if(ERROR_COUNT == 4){
-			ERROR_COUNT = 0;
-			ERROR_AVG = ERROR_ADD/4;
-			//printf("ERROR_AVG: %f \n", ERROR_ADD);
-			if(ERROR_AVG <= IMGERROR_THRESHOLD){
-				OBS_DETECT = TRUE;
-				OBS_HEADING = OBS_HEADING_SET;
-			}
-			ERROR_ADD = 0;
-		} else {
-			ERROR_COUNT++;
-		}
-		ERROR_ADD += image_1to1diff(&opticflowin->img_gray, &opticflowin->prev_img_gray, NULL, 111, 111);
-		*/
 	};
 
 	/*************************

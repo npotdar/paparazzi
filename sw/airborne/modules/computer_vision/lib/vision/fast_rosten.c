@@ -41,12 +41,14 @@ static void fast_make_offsets(int32_t *pixel, uint16_t row_stride, uint8_t pixel
  * @param[in] *img The image to do the corner detection on
  * @param[in] threshold The threshold which we use for FAST9
  * @param[in] min_dist The minimum distance in pixels between detections
- * @param[in] x_padding The padding in the x direction to not scan for corners
- * @param[in] y_padding The padding in the y direction to not scan for corners
+ * @param[in] xl_padding The padding in the x direction on left to not scan for corners
+ * @param[in] xr_padding The padding in the x direction on right to not scan for corners
+ * @param[in] yt_padding The padding in the y direction on top to not scan for corners
+ * @param[in] yb_padding The padding in the y direction on bottom to not scan for corners
  * @param[out] *num_corners The amount of corners found
  * @return The corners found
  */
-struct point_t *fast9_detect(struct image_t *img, uint8_t threshold, uint16_t min_dist, uint16_t x_padding, uint16_t y_padding, uint16_t *num_corners) {
+struct point_t *fast9_detect(struct image_t *img, uint8_t threshold, uint16_t min_dist, uint16_t xl_padding, uint16_t xr_padding, uint16_t yt_padding, uint16_t yb_padding, uint16_t *num_corners) {
   uint32_t corner_cnt = 0;
   uint16_t rsize = 512;
   int pixel[16];
@@ -63,8 +65,8 @@ struct point_t *fast9_detect(struct image_t *img, uint8_t threshold, uint16_t mi
   fast_make_offsets(pixel, img->w, pixel_size);
 
   // Go trough all the pixels (minus the borders)
-  for (y = 3 + y_padding*0.8; y < img->h - 3 - y_padding*1.4; y++)
-    for (x = 3 + x_padding; x < img->w - 3 - x_padding; x++) {
+  for (y = 3 + yt_padding; y < img->h - 3 - yb_padding; y++)
+    for (x = 3 + xl_padding; x < img->w - 3 - xr_padding; x++) {
       // First check if we aren't in range vertical (TODO: fix less intensive way)
       if (min_dist > 0) {
         bool_t need_skip = FALSE;
